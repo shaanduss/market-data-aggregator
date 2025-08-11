@@ -1,5 +1,5 @@
+import MarketDataFetcher from "@/components/marketDataFetcher";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from "next/image";
 
 export default function Home() {
   return (
@@ -14,7 +14,10 @@ export default function Home() {
               Bloomberg
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="yfinance">yahoo</TabsContent>
+          <TabsContent value="yfinance">
+            yahoo
+            <MarketDataFetcher />
+          </TabsContent>
           <TabsContent value="bloomberg">bbg lebron james</TabsContent>
         </Tabs>
       </div>
