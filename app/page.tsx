@@ -15,10 +15,9 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="yfinance">
-            yahoo
             <MarketDataFetcher />
           </TabsContent>
-          <TabsContent value="bloomberg">bbg lebron james</TabsContent>
+          <TabsContent value="bloomberg"></TabsContent>
         </Tabs>
       </div>
     </div>
