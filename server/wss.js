@@ -1,28 +1,62 @@
 const WebSocket = require("ws");
 const yahooFinance = require("yahoo-finance2").default;
 
-// Create our WebSocket
+async function getHistoricalPrices(symbol) {
+  // Range for the last week
+  const now = Math.floor(Date.now() / 1000);
+  const lastTwoWeeks = now - 14 * 24 * 60 * 60;
+
+  // Fetch Symbol's Historical Data
+  const results = await yahooFinance.historical(symbol, {
+    period1: lastTwoWeeks,
+    period2: now,
+    interval: "1d",
+  });
+
+  // Prepare array with { time, price } as ISO datetime + number
+  return results
+    .map((item) => ({
+      time: new Date(item.date).toISOString(), // FULL ISO format, not just time
+      price: parseFloat(item.close).toFixed(2),
+    }))
+    .filter((item) => item.price !== undefined && item.time !== undefined); // Filter out any null/undefined
+}
+
+// WebSocket Server
 const wss = new WebSocket.Server({ port: 4000 });
 
 wss.on("connection", function connection(ws) {
   ws.on("message", async function incoming(message) {
     const { symbol } = JSON.parse(message);
 
+    // Send historical data
+    try {
+      const history = await getHistoricalPrices(symbol);
+      ws.send(JSON.stringify({ type: "history", data: history }));
+    } catch (err) {
+      ws.send(JSON.stringify({ type: "error", error: err.message }));
+    }
+
+    // Send live price updates every 5 seconds
     async function sendQuote() {
       try {
         const quote = await yahooFinance.quote(symbol);
-        ws.send(JSON.stringify(quote));
+        ws.send(
+          JSON.stringify({
+            type: "live",
+            data: {
+              time: new Date().toISOString(), // Always ISO format!
+              price: quote.regularMarketPrice,
+              ...quote,
+            },
+          })
+        );
       } catch (error) {
-        ws.send(JSON.stringify({ error: error.message }));
+        ws.send(JSON.stringify({ type: "error", error: error.message }));
       }
     }
-
-    // send data every 5 seconds
     sendQuote();
     const interval = setInterval(sendQuote, 5000);
-
     ws.on("close", () => clearInterval(interval));
   });
 });
-
-console.log("WebSocket server listening on ws://localhost:4000");
