@@ -76,8 +76,6 @@ const cardData = (data: any) => {
 
 export const InfoCard: React.FC<InfoCardProps> = ({ data }) => {
   return (
-    <div className="mt-4">
-      <FinancialCard {...cardData(data)} />
-    </div>
+    <FinancialCard {...cardData(data)} />
   );
 };
