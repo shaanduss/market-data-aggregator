@@ -8,16 +8,16 @@ export default function Home() {
         <Tabs defaultValue="yfinance">
           <TabsList>
             <TabsTrigger value="yfinance" className="cursor-pointer">
-              YFinance
+              Yahoo Finance
             </TabsTrigger>
-            <TabsTrigger value="bloomberg" className="cursor-pointer">
-              Bloomberg
+            <TabsTrigger value="polygon" className="cursor-pointer">
+              Polygon.IO
             </TabsTrigger>
           </TabsList>
           <TabsContent value="yfinance">
             <MarketDataFetcher />
           </TabsContent>
-          <TabsContent value="bloomberg"></TabsContent>
+          <TabsContent value="polygon"></TabsContent>
         </Tabs>
       </div>
     </div>

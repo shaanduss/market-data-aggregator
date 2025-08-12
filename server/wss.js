@@ -7,27 +7,30 @@ async function getHistoricalPrices(symbol) {
   const lastTwoWeeks = now - 14 * 24 * 60 * 60;
 
   // Fetch Symbol's Historical Data
-  const results = await yahooFinance.historical(symbol, {
+  const results = await yahooFinance.chart(symbol, {
     period1: lastTwoWeeks,
     period2: now,
     interval: "1d",
   });
 
   // Prepare array with { time, price } as ISO datetime + number
-  return results
+  return results.quotes
     .map((item) => ({
       time: new Date(item.date).toISOString(), // FULL ISO format, not just time
-      price: parseFloat(item.close).toFixed(2),
+      price: item.close.toFixed(2),
     }))
     .filter((item) => item.price !== undefined && item.time !== undefined); // Filter out any null/undefined
 }
 
 // WebSocket Server
-const wss = new WebSocket.Server({ port: 4000 });
+const wss = new WebSocket.Server({ port: 4000 }, () => {
+  console.log('WebSocket server is running on ws://localhost:4000');
+});
 
 wss.on("connection", function connection(ws) {
   ws.on("message", async function incoming(message) {
     const { symbol } = JSON.parse(message);
+    let lastPrice = -1
 
     // Send historical data
     try {
@@ -41,16 +44,19 @@ wss.on("connection", function connection(ws) {
     async function sendQuote() {
       try {
         const quote = await yahooFinance.quote(symbol);
-        ws.send(
-          JSON.stringify({
-            type: "live",
-            data: {
-              time: new Date().toISOString(), // Always ISO format!
-              price: quote.regularMarketPrice,
-              ...quote,
-            },
-          })
-        );
+        if (quote.regularMarketPrice != lastPrice) {
+          lastPrice = quote.regularMarketPrice
+          ws.send(
+            JSON.stringify({
+              type: "live",
+              data: {
+                time: new Date().toISOString(), // Always ISO format!
+                price: quote.regularMarketPrice,
+                ...quote,
+              },
+            })
+          );
+        }
       } catch (error) {
         ws.send(JSON.stringify({ type: "error", error: error.message }));
       }
