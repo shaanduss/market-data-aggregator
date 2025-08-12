@@ -23,7 +23,7 @@ export const FinancialCard: FC<FinancialCardProps> = ({
   title,
   icon,
   titleValue,
-  titleColor = "text-violet-700",
+  titleColor = "text-primary",
   sideBlocks
 }) => {
   // Used for sideBlocks if there is no title.
