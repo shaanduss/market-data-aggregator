@@ -4,13 +4,13 @@ const yahooFinance = require("yahoo-finance2").default;
 async function getHistoricalPrices(symbol) {
   // Range for the last week
   const now = Math.floor(Date.now() / 1000);
-  const lastTwoWeeks = now - 14 * 24 * 60 * 60;
+  const lastWeek = now - 7 * 24 * 60 * 60;
 
   // Fetch Symbol's Historical Data
   const results = await yahooFinance.chart(symbol, {
-    period1: lastTwoWeeks,
+    period1: lastWeek,
     period2: now,
-    interval: "1d",
+    interval: "90m",
   });
 
   // Prepare array with { time, price } as ISO datetime + number
@@ -24,13 +24,13 @@ async function getHistoricalPrices(symbol) {
 
 // WebSocket Server
 const wss = new WebSocket.Server({ port: 4000 }, () => {
-  console.log('WebSocket server is running on ws://localhost:4000');
+  console.log("WebSocket server is running on ws://localhost:4000");
 });
 
 wss.on("connection", function connection(ws) {
   ws.on("message", async function incoming(message) {
     const { symbol } = JSON.parse(message);
-    let lastPrice = -1
+    let lastPrice = -1;
 
     // Send historical data
     try {
@@ -45,7 +45,7 @@ wss.on("connection", function connection(ws) {
       try {
         const quote = await yahooFinance.quote(symbol);
         if (quote.regularMarketPrice != lastPrice) {
-          lastPrice = quote.regularMarketPrice
+          lastPrice = quote.regularMarketPrice;
           ws.send(
             JSON.stringify({
               type: "live",
