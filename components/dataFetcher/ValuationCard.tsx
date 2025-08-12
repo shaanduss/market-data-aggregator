@@ -9,11 +9,17 @@ interface ValuationCardProps {
 }
 
 const cardData = (data: any) => {
-  const targetPrice = data.recommendation.targetPrice
-  const targetPriceStr = targetPrice ? ("$" + targetPrice) : "N/A"
+  const recommendation = data.recommendation ?? null;
+  const targetPrice = recommendation ? recommendation.targetPrice : null;
+  const targetPriceStr = targetPrice ? "$" + targetPrice : "N/A";
+  const rating = recommendation ? recommendation.rating : null;
+  const provider = recommendation ? recommendation.provider : null;
+  const valuation = data.instrumentInfo.valuation ?? null;
+  const valuationDesc = valuation ? valuation.description : null;
+
   return {
     title: "Valuation",
-    titleValue: data.instrumentInfo.valuation.description ?? "...",
+    titleValue: valuationDesc ?? "...",
     icon: <TrendingUpDown className="h-4 w-4" />,
     sideBlocks: [
       {
@@ -22,18 +28,16 @@ const cardData = (data: any) => {
       },
       {
         label: "Rating",
-        value: data.recommendation.rating ?? "N/A",
+        value: rating ?? "N/A",
       },
       {
         label: "Provider",
-        value: data.recommendation.provider ?? "N/A",
+        value: provider ?? "N/A",
       },
     ],
   } as FinancialCardProps;
 };
 
 export const ValuationCard: React.FC<ValuationCardProps> = ({ data }) => {
-  return (
-    <FinancialCard {...cardData(data)} />
-  );
+  return <FinancialCard {...cardData(data)} />;
 };
