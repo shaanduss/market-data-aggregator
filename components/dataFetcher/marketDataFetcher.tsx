@@ -13,10 +13,12 @@ import {
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { CustomTooltip } from "@/components/customTooltip";
 import { InfoCard } from "@/components/dataFetcher/InfoCard";
+import { OutlookCard } from "@/components/dataFetcher/OutlookCard";
 
 export default function MarketDataFetcher() {
   const [symbol, setSymbol] = useState("^BSESN");
   const [data, setData] = useState<any>(null);
+  const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -46,6 +48,8 @@ export default function MarketDataFetcher() {
         ]);
       } else if (msg.type === "error") {
         setLoading(false);
+      } else if (msg.type === "insights") {
+        setInsights(msg.data);
       }
     };
 
@@ -86,14 +90,24 @@ export default function MarketDataFetcher() {
       </div>
 
       {/* Title Section */}
-      {data && <InfoCard data={data} />}
+      {data && history && insights && (
+        <div className="flex gap-x-3">
+          <InfoCard data={data} />
+          {data.quoteType === "EQUITY" && insights && (
+            <>
+              <OutlookCard data={insights} />
+              <OutlookCard data={insights} />
+            </>
+          )}
+        </div>
+      )}
 
       {/* Chart Section */}
-      {chartData.length > 1 && (
-        <div className="mt-8">
+      {chartData.length > 1 && data && history && insights && (
+        <div className="mt-10">
           <ChartContainer
             config={chartConfig}
-            className="min-h-[240px] max-h-[400px] w-full"
+            className="min-h-[240px] max-h-[700px] w-full"
           >
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
