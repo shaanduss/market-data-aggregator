@@ -14,6 +14,7 @@ import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { CustomTooltip } from "@/components/customTooltip";
 import { InfoCard } from "@/components/dataFetcher/InfoCard";
 import { OutlookCard } from "@/components/dataFetcher/OutlookCard";
+import { ValuationCard } from "@/components/dataFetcher/ValuationCard";
 
 export default function MarketDataFetcher() {
   const [symbol, setSymbol] = useState("^BSESN");
@@ -95,7 +96,7 @@ export default function MarketDataFetcher() {
           <InfoCard data={data} />
           {data.quoteType === "EQUITY" && insights && (
             <>
-              <OutlookCard data={insights} />
+              <ValuationCard data={insights} />
               <OutlookCard data={insights} />
             </>
           )}
