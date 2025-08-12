@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/chart";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { CustomTooltip } from "@/components/customTooltip";
+import { InfoCard } from "@/components/dataFetcher/InfoCard";
 
 export default function MarketDataFetcher() {
   const [symbol, setSymbol] = useState("^BSESN");
@@ -31,7 +32,6 @@ export default function MarketDataFetcher() {
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       if (msg.type === "history") {
-        console.log(msg.data);
         setHistory(msg.data);
         setLoading(false);
       } else if (msg.type === "live") {
@@ -81,17 +81,14 @@ export default function MarketDataFetcher() {
           disabled={loading}
           className="cursor-pointer"
         >
-          {loading ? "Subscribing..." : "Subscribe"}
+          {loading ? "Loading..." : "Search"}
         </Button>
       </div>
-      {data && (
-        <div className="mt-4">
-          <h3>
-            {data.shortName} ({data.symbol})
-          </h3>
-          <p>Price: {data.price}</p>
-        </div>
-      )}
+
+      {/* Title Section */}
+      {data && <InfoCard data={data} />}
+
+      {/* Chart Section */}
       {chartData.length > 1 && (
         <div className="mt-8">
           <ChartContainer

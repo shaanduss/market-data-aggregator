@@ -1,4 +1,4 @@
-import MarketDataFetcher from "@/components/marketDataFetcher";
+import MarketDataFetcher from "@/components/dataFetcher/marketDataFetcher";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
