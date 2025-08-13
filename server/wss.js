@@ -113,7 +113,9 @@ wss.on("connection", (ws, req) => {
           const meta = metaRes.quoteResponse.result[0];
           ws.send(JSON.stringify({ type: "meta", data: meta }));
         } catch (err) {
-          ws.send(JSON.stringify({ type: "meta", data: null, error: err.message }));
+          ws.send(
+            JSON.stringify({ type: "meta", data: null, error: err.message })
+          );
         }
 
         // Start streaming live ticks
@@ -150,7 +152,7 @@ wss.on("connection", (ws, req) => {
       if (newPrice != lastPrice) {
         await saveMarketData(symbol, tick);
         ws.send(JSON.stringify({ type: "live", data: tick }));
-        lastPrice = newPrice
+        lastPrice = newPrice;
       }
 
       timer = setTimeout(streamLive, interval);

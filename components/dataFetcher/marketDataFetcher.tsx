@@ -43,7 +43,7 @@ export default function MarketDataFetcher() {
 
       if (msg.type === "error") {
         setLoading(false);
-        toast.error(msg.error || "Unknown error")
+        toast.error(msg.error || "Unknown error");
         ws.close(); // Close connection if token is invalid
         return;
       }
@@ -51,17 +51,17 @@ export default function MarketDataFetcher() {
       if (msg.type === "history") {
         setHistory(msg.data);
         setLoading(false);
-        console.log("history: ", msg.data)
+        console.log("history: ", msg.data);
       } else if (msg.type === "live") {
         setData(msg.data);
         setHistory((h) => [...h, { time: msg.data.ts, price: msg.data.price }]);
-        console.log("data: ", msg.data)
+        console.log("data: ", msg.data);
       } else if (msg.type === "insights") {
         setInsights(msg.data);
-        console.log("insights: ", msg.data)
+        console.log("insights: ", msg.data);
       } else if (msg.type === "meta") {
         setMeta(msg.data);
-        console.log("meta: ", msg.data)
+        console.log("meta: ", msg.data);
       }
     };
 

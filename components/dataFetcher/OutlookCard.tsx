@@ -11,8 +11,7 @@ interface OutlookCardProps {
 const cardData = (data: any) => {
   return {
     title: "Sector",
-    titleValue:
-      data.companySnapshot.sectorInfo ?? "N/A",
+    titleValue: data.companySnapshot.sectorInfo ?? "N/A",
     icon: <Factory className="h-4 w-4" />,
     sideBlocks: [
       {
@@ -23,8 +22,7 @@ const cardData = (data: any) => {
       {
         label: "Mid-Term Events",
         value:
-          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ??
-          "N/A",
+          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ?? "N/A",
       },
       {
         label: "Long-Term Score",

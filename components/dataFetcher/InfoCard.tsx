@@ -21,7 +21,7 @@ function formatMarketCap(value: number): string {
 }
 
 const EquityData = (data: any) => {
-  const marketCap = "$" + formatMarketCap(data.marketCap).toLocaleString()
+  const marketCap = "$" + formatMarketCap(data.marketCap).toLocaleString();
   return {
     title: data.shortName,
     titleValue: data.price,
@@ -29,15 +29,15 @@ const EquityData = (data: any) => {
     sideBlocks: [
       {
         label: "Instrument Type",
-        value: data.quoteType
+        value: data.quoteType,
       },
       {
         label: "Forward P/E",
-        value: data.forwardPE.toFixed(3)
+        value: data.forwardPE.toFixed(3),
       },
       {
         label: "Market Capitalization",
-        value: marketCap
+        value: marketCap,
       },
     ],
   } as FinancialCardProps;
@@ -75,7 +75,5 @@ const cardData = (data: any) => {
 };
 
 export const InfoCard: React.FC<InfoCardProps> = ({ data }) => {
-  return (
-    <FinancialCard {...cardData(data)} />
-  );
+  return <FinancialCard {...cardData(data)} />;
 };
