@@ -15,6 +15,7 @@ import { CustomTooltip } from "@/components/customTooltip";
 import { InfoCard } from "@/components/dataFetcher/InfoCard";
 import { OutlookCard } from "@/components/dataFetcher/OutlookCard";
 import { ValuationCard } from "@/components/dataFetcher/ValuationCard";
+import { toast } from "sonner";
 
 export default function MarketDataFetcher() {
   const [symbol, setSymbol] = useState("^BSESN");
@@ -26,36 +27,39 @@ export default function MarketDataFetcher() {
 
   const startWebSocket = () => {
     setLoading(true);
+
     if (wsRef.current) wsRef.current.close();
-    const ws = new window.WebSocket("ws://localhost:4000");
+
+    const ws = new WebSocket("ws://localhost:4000?token=shaantest");
     wsRef.current = ws;
 
-    ws.onopen = () => ws.send(JSON.stringify({ symbol }));
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "config", symbol, interval: 5000 }));
+    };
 
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+
+      if (msg.type === "error") {
+        setLoading(false);
+        toast.error(msg.error || "Unknown error")
+        ws.close(); // Close connection if token is invalid
+        return;
+      }
+
       if (msg.type === "history") {
         setHistory(msg.data);
         setLoading(false);
       } else if (msg.type === "live") {
         setData(msg.data);
-
-        setHistory((h) => [
-          ...h,
-          {
-            time: new Date().toISOString(),
-            price: msg.data.price,
-          },
-        ]);
-      } else if (msg.type === "error") {
-        setLoading(false);
+        setHistory((h) => [...h, { time: msg.data.ts, price: msg.data.price }]);
       } else if (msg.type === "insights") {
         setInsights(msg.data);
       }
     };
 
     ws.onerror = () => {
-      alert("WebSocket error");
+      toast.error("WebSocket error");
       setLoading(false);
     };
   };
