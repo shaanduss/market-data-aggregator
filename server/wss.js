@@ -1,89 +1,151 @@
 const WebSocket = require("ws");
-const yahooFinance = require("yahoo-finance2").default.suppressNotices(['yahooSurvey']);
+const fetch = require("node-fetch");
+require("dotenv").config();
 
-async function getHistoricalPrices(symbol) {
-  // Range for the last week
-  const now = Math.floor(Date.now() / 1000);
-  const lastWeek = now - 7 * 24 * 60 * 60;
+// Supabase Related Variables
+const { createClient } = require("@supabase/supabase-js");
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // Fetch Symbol's Historical Data
-  const results = await yahooFinance.chart(symbol, {
-    period1: lastWeek,
-    period2: now,
-    interval: "90m",
-  });
+const wss = new WebSocket.Server({ port: 4000 });
 
-  // Prepare array with { time, price } as ISO datetime + number
-  return results.quotes
-    .map((item) => ({
-      time: new Date(item.date).toISOString(), // FULL ISO format, not just time
-      price: item.close.toFixed(2),
-    }))
-    .filter((item) => item.price !== undefined && item.time !== undefined); // Filter out any null/undefined
+// Valid Token Check
+const VALID_CLIENT_TOKENS = process.env.VALID_CLIENT_TOKENS?.split(",") || [];
+function isValidToken(token) {
+  return VALID_CLIENT_TOKENS.includes(token);
 }
 
-async function getInsights(symbol) {
-  const queryOptions = { lang: "en-US", reportsCount: 2, region: "US" };
-  const result = await yahooFinance.insights(symbol, queryOptions);
-  return result;
-}
-
-async function sendQuote(symbol, ws, lastPrice) {
-  try {
-    const quote = await yahooFinance.quote(symbol);
-    if (quote.regularMarketPrice != lastPrice) {
-      lastPrice = quote.regularMarketPrice;
-      ws.send(
-        JSON.stringify({
-          type: "live",
-          data: {
-            time: new Date().toISOString(), // Always ISO format!
-            price: quote.regularMarketPrice,
-            ...quote,
-          },
-        })
-      );
+// Retry Fetching Function incase of failure
+async function retryFetch(url, options = {}, retries = 3, backoff = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error(`HttpError: ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise((res) => setTimeout(res, backoff * 2 ** i));
     }
-    return quote.regularMarketPrice;
-  } catch (error) {
-    ws.send(JSON.stringify({ type: "error", error: error.message }));
-    return -1;
   }
 }
 
-// WebSocket Server
-const wss = new WebSocket.Server({ port: 4000 }, () => {
-  console.log("WebSocket server is running on ws://localhost:4000");
-});
+// Save to Supabase DB
+async function saveMarketData(symbol, data) {
+  await supabase.from("market_ticks").insert([{ symbol, ...data }]);
+}
 
-wss.on("connection", function connection(ws) {
-  ws.on("message", async function incoming(message) {
-    const { symbol } = JSON.parse(message);
-    let lastPrice = -1;
+// Yahoo Finance helpers
+const YAHOO_CHART = (symbol) =>
+  `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=7d`;
 
-    // Send live price updates every 5 seconds
-    const price = await sendQuote(symbol, ws, lastPrice);
-    if (price != -1 && price != lastPrice) {
-      lastPrice = price;
-    }
-    const interval = setInterval(() => sendQuote(symbol, ws, lastPrice), 5000);
+const YAHOO_INSIGHTS = (symbol) =>
+  `https://query1.finance.yahoo.com/ws/insights/v1/finance/insights?symbol=${symbol}`;
 
-    // Send historical data
+wss.on("connection", (ws, req) => {
+  ws.isAlive = true;
+  console.log("New Connection to ws://localhost:4000");
+
+  // Close WebSocket if token is invalid
+  const token = new URL(`ws://placeholder${req.url}`).searchParams.get("token");
+  if (!isValidToken(token)) {
+    ws.send(
+      JSON.stringify({ type: "error", error: "Invalid or missing token." })
+    );
+    ws.close();
+    return;
+  }
+
+  let symbol = "^BSESN";
+  let interval = 5000;
+  let timer;
+
+  ws.on("message", async (message) => {
     try {
-      const history = await getHistoricalPrices(symbol);
-      ws.send(JSON.stringify({ type: "history", data: history }));
-    } catch (err) {
-      ws.send(JSON.stringify({ type: "error", error: err.message }));
-    }
+      const {
+        type,
+        symbol: userSymbol,
+        interval: userInterval,
+      } = JSON.parse(message);
+      if (type === "config") {
+        if (userSymbol) symbol = userSymbol;
+        if (userInterval) {
+          interval = Math.max(1000, Math.min(60000, Number(userInterval)));
+        }
 
-    try {
-      const insights = await getInsights(symbol);
-      console.log(insights);
-      ws.send(JSON.stringify({ type: "insights", data: insights }));
-    } catch (err) {
-      ws.send(JSON.stringify({ type: "error", error: err.message }));
-    }
+        // Send initial history
+        const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+        const timestamps = chart.chart.result[0].timestamp;
+        const closes = chart.chart.result[0].indicators.quote[0].close;
 
-    ws.on("close", () => clearInterval(interval));
+        // Create Object to send as message
+        const historyData = timestamps.map((t, idx) => ({
+          time: new Date(t * 1000).toISOString(),
+          price: closes[idx],
+        }));
+
+        ws.send(JSON.stringify({ type: "history", data: historyData }));
+
+        // Send insights
+        try {
+          const insightsRes = await retryFetch(
+            YAHOO_INSIGHTS(symbol),
+            {},
+            3,
+            1000
+          );
+          ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
+        } catch {
+          ws.send(JSON.stringify({ type: "insights", data: null }));
+        }
+
+        // Start streaming live ticks
+        clearTimeout(timer);
+        streamLive();
+      }
+    } catch (err) {
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          error: "Invalid configuration message.",
+        })
+      );
+      console.error("Error parsing message:", err);
+    }
   });
+
+  ws.on("pong", () => (ws.isAlive = true));
+
+  async function streamLive() {
+    try {
+      const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+      const quotes = chart.chart.result[0].indicators.quote[0];
+      const timestamps = chart.chart.result[0].timestamp;
+      const latestIdx = quotes.close.length - 1;
+
+      const tick = {
+        price: quotes.close[latestIdx],
+        volume: quotes.volume[latestIdx],
+        ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
+      };
+
+      await saveMarketData(symbol, tick);
+      ws.send(JSON.stringify({ type: "live", data: tick }));
+
+      timer = setTimeout(streamLive, interval);
+    } catch (err) {
+      ws.send(JSON.stringify({ type: "error", error: err.message }));
+      timer = setTimeout(streamLive, Math.min(interval * 2, 30000));
+    }
+  }
+
+  ws.on("close", () => clearTimeout(timer));
 });
+
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (!ws.isAlive) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
