@@ -9,7 +9,6 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const wss = new WebSocket.Server({ port: 4000 });
-let lastPrice = -1;
 
 // Valid Token Check
 const VALID_CLIENT_TOKENS = process.env.VALID_CLIENT_TOKENS?.split(",") || [];
@@ -43,11 +42,10 @@ const YAHOO_CHART = (symbol) =>
 const YAHOO_INSIGHTS = (symbol) =>
   `https://query1.finance.yahoo.com/ws/insights/v1/finance/insights?symbol=${symbol}`;
 
-const YAHOO_QUOTE = (symbol) =>
-  `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
 
 wss.on("connection", (ws, req) => {
   ws.isAlive = true;
+  let lastPrice = -1;
   console.log("New Connection to ws://localhost:4000");
 
   // Close WebSocket if token is invalid
@@ -86,7 +84,7 @@ wss.on("connection", (ws, req) => {
           // Create Object to send as message
           const historyData = timestamps.map((t, idx) => ({
             time: new Date(t * 1000).toISOString(),
-            price: closes[idx],
+            price: Number(closes[idx].toFixed(2)),
           }));
 
           ws.send(JSON.stringify({ type: "history", data: historyData }));
@@ -107,16 +105,13 @@ wss.on("connection", (ws, req) => {
           ws.send(JSON.stringify({ type: "insights", data: null }));
         }
 
-        // Fetch and send meta data
+        // Send Chart Data
         try {
-          const metaRes = await retryFetch(YAHOO_QUOTE(symbol), {}, 3, 1000);
-          const meta = metaRes.quoteResponse.result[0];
-          ws.send(JSON.stringify({ type: "meta", data: meta }));
+          await fetchChartData()
         } catch (err) {
-          ws.send(
-            JSON.stringify({ type: "meta", data: null, error: err.message })
-          );
+          ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
+
 
         // Start streaming live ticks
         clearTimeout(timer);
@@ -135,26 +130,33 @@ wss.on("connection", (ws, req) => {
 
   ws.on("pong", () => (ws.isAlive = true));
 
+  async function fetchChartData() {
+    const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+    const quotes = chart.chart.result[0].indicators.quote[0];
+    const timestamps = chart.chart.result[0].timestamp;
+    const latestIdx = quotes.close.length - 1;
+    const newPrice = Number(quotes.close[latestIdx].toFixed(2));
+
+    const meta = chart.chart.result[0].meta;
+
+    const tick = {
+      price: newPrice,
+      volume: quotes.volume[latestIdx],
+      ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
+      meta: meta
+
+    };
+
+    if (newPrice != lastPrice) {
+      await saveMarketData(symbol, tick);
+      ws.send(JSON.stringify({ type: "live", data: tick }));
+      lastPrice = newPrice;
+    }
+  }
+
   async function streamLive() {
     try {
-      const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
-      const quotes = chart.chart.result[0].indicators.quote[0];
-      const timestamps = chart.chart.result[0].timestamp;
-      const latestIdx = quotes.close.length - 1;
-      const newPrice = quotes.close[latestIdx];
-
-      const tick = {
-        price: newPrice,
-        volume: quotes.volume[latestIdx],
-        ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
-      };
-
-      if (newPrice != lastPrice) {
-        await saveMarketData(symbol, tick);
-        ws.send(JSON.stringify({ type: "live", data: tick }));
-        lastPrice = newPrice;
-      }
-
+      await fetchChartData()
       timer = setTimeout(streamLive, interval);
     } catch (err) {
       ws.send(JSON.stringify({ type: "error", error: err.message }));
