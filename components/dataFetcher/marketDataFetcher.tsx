@@ -22,6 +22,7 @@ export default function MarketDataFetcher() {
   const [data, setData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);
+  const [meta, setMeta] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -50,11 +51,17 @@ export default function MarketDataFetcher() {
       if (msg.type === "history") {
         setHistory(msg.data);
         setLoading(false);
+        console.log("history: ", msg.data)
       } else if (msg.type === "live") {
         setData(msg.data);
         setHistory((h) => [...h, { time: msg.data.ts, price: msg.data.price }]);
+        console.log("data: ", msg.data)
       } else if (msg.type === "insights") {
         setInsights(msg.data);
+        console.log("insights: ", msg.data)
+      } else if (msg.type === "meta") {
+        setMeta(msg.data);
+        console.log("meta: ", msg.data)
       }
     };
 
@@ -95,9 +102,9 @@ export default function MarketDataFetcher() {
       </div>
 
       {/* Title Section */}
-      {data && history && insights && (
+      {history && insights && meta && (
         <div className="flex gap-x-3">
-          <InfoCard data={data} />
+          <InfoCard data={meta} />
           {!symbol.startsWith("^") && insights && (
             <>
               <ValuationCard data={insights.finance.result} />
@@ -108,7 +115,7 @@ export default function MarketDataFetcher() {
       )}
 
       {/* Chart Section */}
-      {chartData.length > 1 && data && history && insights && (
+      {chartData.length > 1 && history && insights && meta && (
         <div className="mt-10">
           <ChartContainer
             config={chartConfig}
