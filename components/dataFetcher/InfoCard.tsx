@@ -21,52 +21,64 @@ function formatMarketCap(value: number): string {
 }
 
 const EquityData = (data: any) => {
-  const marketCap = "$" + formatMarketCap(data.marketCap).toLocaleString();
+  const shortName = data.shortName ?? "N/A";
+  const price = Number(data.regularMarketPrice).toLocaleString() ?? "N/A"
+  const instrumentType = data.instrumentType ?? "N/A"
+  const previousClose = Number(data.previousClose).toLocaleString() ?? "N/A"
+  const volume = Number(data.regularMarketVolume).toLocaleString() ?? "N/A"
+
   return {
-    title: data.shortName,
-    titleValue: data.price,
+    title: shortName,
+    titleValue: price,
     icon: <TrendingUpDown className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Instrument Type",
-        value: data.quoteType,
+        value: instrumentType,
       },
       {
-        label: "Forward P/E",
-        value: data.forwardPE.toFixed(3),
+        label: "Prev. Close",
+        value: previousClose,
       },
       {
-        label: "Market Capitalization",
-        value: marketCap,
+        label: "Volume",
+        value: volume,
       },
     ],
   } as FinancialCardProps;
 };
 
 const IndexData = (data: any) => {
+  const shortName = data.shortName ?? "N/A";
+  const price = Number(data.regularMarketPrice).toLocaleString() ?? "N/A"
+  const instrumentType = data.instrumentType ?? "N/A"
+  const previousClose = Number(data.previousClose).toLocaleString() ?? "N/A"
+  const marketHigh = Number(data.regularMarketDayHigh).toLocaleString() ?? "N/A"
+
   return {
-    title: data.shortName,
-    titleValue: data.price,
+    title: shortName,
+    titleValue: price,
     icon: <TrendingUpDown className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Instrument Type",
-        value: data.quoteType,
+        value: instrumentType,
       },
       {
-        label: "Market Open",
-        value: Number(data.regularMarketOpen).toLocaleString(),
+        label: "Prev. Close",
+        value: previousClose,
       },
       {
         label: "Market High",
-        value: Number(data.regularMarketDayHigh).toLocaleString(),
+        value: marketHigh,
       },
     ],
   } as FinancialCardProps;
 };
 
 const cardData = (data: any) => {
-  switch (data.quoteType) {
+  const instrumentType = data.instrumentType ?? "N/A"
+  switch (instrumentType) {
     case "EQUITY":
       return EquityData(data);
     default:

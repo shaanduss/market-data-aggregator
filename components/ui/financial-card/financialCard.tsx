@@ -31,7 +31,7 @@ export const FinancialCard: FC<FinancialCardProps> = ({
   const groupStyling = "flex flex-col gap-y-3 w-full"
   return(
     <div className="flex items-start justify-center">
-      <Card className="w-full xl:w-[500px]">
+      <Card className="w-full xl:w-[450px]">
         <CardContent className="flex justify-between py-3 px-5 gap-x-6">
           {/* Render Title and Title Value if they exist */}
           {

@@ -22,7 +22,6 @@ export default function MarketDataFetcher() {
   const [data, setData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);
-  const [meta, setMeta] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -59,9 +58,6 @@ export default function MarketDataFetcher() {
       } else if (msg.type === "insights") {
         setInsights(msg.data);
         console.log("insights: ", msg.data);
-      } else if (msg.type === "meta") {
-        setMeta(msg.data);
-        console.log("meta: ", msg.data);
       }
     };
 
@@ -102,10 +98,10 @@ export default function MarketDataFetcher() {
       </div>
 
       {/* Title Section */}
-      {history && insights && meta && (
+      {data && history && insights && (
         <div className="flex gap-x-3">
-          <InfoCard data={meta} />
-          {!symbol.startsWith("^") && insights && (
+          <InfoCard data={data.meta} />
+          {data.meta.instrumentType === "EQUITY" && insights && (
             <>
               <ValuationCard data={insights.finance.result} />
               <OutlookCard data={insights.finance.result} />
@@ -115,11 +111,11 @@ export default function MarketDataFetcher() {
       )}
 
       {/* Chart Section */}
-      {chartData.length > 1 && history && insights && meta && (
+      {chartData.length > 1 && data && history && insights && (
         <div className="mt-10">
           <ChartContainer
             config={chartConfig}
-            className="min-h-[240px] max-h-[700px] w-full"
+            className="min-h-[240px] max-h-[700px] w-full px-5"
           >
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
