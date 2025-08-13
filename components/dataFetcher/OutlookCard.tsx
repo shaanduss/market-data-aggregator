@@ -2,7 +2,7 @@ import {
   FinancialCard,
   FinancialCardProps,
 } from "@/components/ui/financial-card/financialCard";
-import { TrendingUpDown } from "lucide-react";
+import { Factory } from "lucide-react";
 
 interface OutlookCardProps {
   data: any;
@@ -10,26 +10,26 @@ interface OutlookCardProps {
 
 const cardData = (data: any) => {
   return {
-    title: "Short Term Outlook",
+    title: "Sector",
     titleValue:
-      data.instrumentInfo.technicalEvents.shortTermOutlook.direction ?? "N/A",
-    icon: <TrendingUpDown className="h-4 w-4" />,
+      data.companySnapshot.sectorInfo ?? "N/A",
+    icon: <Factory className="h-4 w-4" />,
     sideBlocks: [
       {
-        label: "Short Term Score",
+        label: "Short-Term Events",
         value:
-          data.instrumentInfo.technicalEvents.shortTermOutlook.score ?? "N/A",
+          data.instrumentInfo.technicalEvents.shortTerm.toUpperCase() ?? "N/A",
       },
       {
-        label: "Long Term Outlook",
+        label: "Mid-Term Events",
         value:
-          data.instrumentInfo.technicalEvents.longTermOutlook.direction ??
+          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ??
           "N/A",
       },
       {
-        label: "Long Term Score",
+        label: "Long-Term Score",
         value:
-          data.instrumentInfo.technicalEvents.longTermOutlook.score ?? "N/A",
+          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ?? "N/A",
       },
     ],
   } as FinancialCardProps;

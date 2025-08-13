@@ -2,14 +2,14 @@ import {
   FinancialCard,
   FinancialCardProps,
 } from "@/components/ui/financial-card/financialCard";
-import { TrendingUpDown } from "lucide-react";
+import { Coins } from "lucide-react";
 
 interface ValuationCardProps {
   data: any;
 }
 
 const cardData = (data: any) => {
-  const recommendation = data.recommendation ?? null;
+  const recommendation = data.instrumentInfo.recommendation ?? null;
   const targetPrice = recommendation ? recommendation.targetPrice : null;
   const targetPriceStr = targetPrice ? "$" + targetPrice : "N/A";
   const rating = recommendation ? recommendation.rating : null;
@@ -20,7 +20,7 @@ const cardData = (data: any) => {
   return {
     title: "Valuation",
     titleValue: valuationDesc ?? "...",
-    icon: <TrendingUpDown className="h-4 w-4" />,
+    icon: <Coins className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Target Price",

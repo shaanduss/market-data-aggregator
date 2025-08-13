@@ -98,10 +98,10 @@ export default function MarketDataFetcher() {
       {data && history && insights && (
         <div className="flex gap-x-3">
           <InfoCard data={data} />
-          {data.quoteType === "EQUITY" && insights && (
+          {!symbol.startsWith("^") && insights && (
             <>
-              <ValuationCard data={insights} />
-              <OutlookCard data={insights} />
+              <ValuationCard data={insights.finance.result} />
+              <OutlookCard data={insights.finance.result} />
             </>
           )}
         </div>
