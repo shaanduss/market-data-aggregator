@@ -96,15 +96,6 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
     },
   };
 
-  const cardBoxStyling = () => {
-    const baseStyle = "flex mt-4 justify-between"
-    if (isEquity) {
-      return baseStyle
-    } else {
-      return baseStyle + " items-center w-full justify-center"
-    }
-  }
-
   useEffect(() => {
     if (meta && meta.instrumentType === "EQUITY") {
       setIsEquity(true);
@@ -137,7 +128,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
 
       {/* Title Section */}
       {insights && meta && !loading && (
-        <div className={cardBoxStyling()}>
+        <div className="grid grid-cols-2 xl:grid-cols-3 mt-4 gap-5">
           <InfoCard data={meta} />
           {isEquity && insights && (
             <>
