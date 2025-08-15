@@ -32,42 +32,24 @@ async function fetchAlphaVantageHistory(symbol, seriesIn) {
 }
 
 async function fetchAlphaVantageInsights(symbol) {
-  // Fetch overview and indicator data
+  // Fetch overview data from Alpha Vantage
   const overview = await retryFetch(ALPHAVANTAGE_OVERVIEW(symbol), {}, 3, 1000);
-  const rsiRes = await retryFetch(ALPHAVANTAGE_RSI(symbol), {}, 3, 1000);
 
-  // Alpha Vantage doesn't provide direct recommendations
-  const rating = "N/A";
-  const targetPrice = overview["52WeekHigh"]
-    ? Number(overview["52WeekHigh"])
+  // Extract the desired fields
+  const PERatio = overview["PERatio"] ?? "N/A";
+  const targetPrice =
+    overview["AnalystTargetPrice"] ??
+    (overview["52WeekHigh"] ? Number(overview["52WeekHigh"]) : "N/A");
+  const eps = overview["EPS"] ?? "N/A";
+  const dividendYield = overview["DividendYield"]
+    ? `${(Number(overview["DividendYield"]) * 100).toFixed(2)}%`
     : "N/A";
-  const sectorInfo = overview["Sector"] ?? "N/A";
-  const valuationDesc = overview["Description"] ?? "N/A";
-  const provider = "Alpha Vantage";
-  const technicalEvents = rsiRes["Technical Analysis: RSI"] ?? null;
-
-  // Get most recent RSI values for short/mid/long term (if available)
-  const rsiDates = technicalEvents
-    ? Object.keys(technicalEvents).sort().reverse()
-    : [];
-  let shortTerm = "N/A",
-    midTerm = "N/A",
-    longTerm = "N/A";
-  if (rsiDates.length > 0) {
-    shortTerm = String(technicalEvents[rsiDates[0]]["RSI"]);
-    midTerm = rsiDates ? String(technicalEvents[rsiDates]["RSI"]) : shortTerm;
-    longTerm = rsiDates ? String(technicalEvents[rsiDates]["RSI"]) : shortTerm;
-  }
 
   return {
+    PERatio,
     targetPrice,
-    rating,
-    provider,
-    valuationDesc,
-    sectorInfo,
-    shortTerm,
-    midTerm,
-    longTerm,
+    eps,
+    dividendYield,
   };
 }
 
