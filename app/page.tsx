@@ -1,4 +1,4 @@
-import MarketDataFetcher from "@/components/dataFetcher/marketDataFetcher";
+import { MarketDataFetcher } from "@/components/dataFetcher/marketDataFetcher";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
@@ -10,14 +10,16 @@ export default function Home() {
             <TabsTrigger value="yfinance" className="cursor-pointer">
               Yahoo Finance
             </TabsTrigger>
-            <TabsTrigger value="polygon" className="cursor-pointer">
-              Polygon.IO
+            <TabsTrigger value="alpha-vantage" className="cursor-pointer">
+              Alpha Vantage
             </TabsTrigger>
           </TabsList>
           <TabsContent value="yfinance">
-            <MarketDataFetcher />
+            <MarketDataFetcher platform="yfinance"/>
           </TabsContent>
-          <TabsContent value="polygon"></TabsContent>
+          <TabsContent value="alpha-vantage">
+            <MarketDataFetcher platform="alpha-vantage"/>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

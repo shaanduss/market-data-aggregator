@@ -17,7 +17,11 @@ import { OutlookCard } from "@/components/dataFetcher/OutlookCard";
 import { ValuationCard } from "@/components/dataFetcher/ValuationCard";
 import { toast } from "sonner";
 
-export default function MarketDataFetcher() {
+interface MarketDataFetcherProps {
+  platform: string
+}
+
+export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) => {
   const [symbol, setSymbol] = useState("^BSESN");
   const [data, setData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
