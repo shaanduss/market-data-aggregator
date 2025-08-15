@@ -9,7 +9,6 @@ const {
 const { retryFetch, YAHOO_CHART } = require("./helpers.js");
 
 const WebSocket = require("ws");
-const fetch = require("node-fetch");
 require("dotenv").config();
 
 // Supabase Related Variables
@@ -31,8 +30,6 @@ async function saveMarketData(symbol, data) {
   await supabase.from("market_ticks").insert([{ symbol, ...data }]);
 }
 
-
-
 wss.on("connection", (ws, req) => {
   ws.isAlive = true;
   let lastPrice = -1;
@@ -48,7 +45,8 @@ wss.on("connection", (ws, req) => {
     return;
   }
 
-  let symbol = "^BSESN";
+  // Variables needed for WS to work
+  let symbol = "";
   let platform = "";
   let interval = 5000;
   let timer;
@@ -62,19 +60,21 @@ wss.on("connection", (ws, req) => {
         interval: userInterval,
       } = JSON.parse(message);
       if (type === "config") {
-        if (userSymbol) symbol = userSymbol;
-        if (userInterval) {
-          interval = Math.max(1000, Math.min(60000, Number(userInterval)));
-        }
-        if (userPlatform) {
+        // Handle config on initial connection
+        if (userSymbol && userPlatform) {
+          symbol = userSymbol;
           platform = userPlatform;
         } else {
           ws.send(
             JSON.stringify({
               type: "error",
-              data: "You must provide a platform to fetch data from",
+              data: "You must provide a platform and symbol to fetch data from/for",
             })
           );
+        }
+
+        if (userInterval) {
+          interval = Math.max(1000, Math.min(60000, Number(userInterval)));
         }
 
         let chart = {};

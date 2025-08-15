@@ -1,3 +1,4 @@
+const fetch = require("node-fetch");
 // Retry Fetching Function incase of failure
 async function retryFetch(url, options = {}, retries = 3, backoff = 1000) {
   for (let i = 0; i < retries; i++) {
@@ -19,4 +20,4 @@ const YAHOO_CHART = (symbol) =>
 const YAHOO_INSIGHTS = (symbol) =>
   `https://query1.finance.yahoo.com/ws/insights/v1/finance/insights?symbol=${symbol}`;
 
-module.exports = {retryFetch, YAHOO_CHART, YAHOO_INSIGHTS}
+module.exports = { retryFetch, YAHOO_CHART, YAHOO_INSIGHTS };
