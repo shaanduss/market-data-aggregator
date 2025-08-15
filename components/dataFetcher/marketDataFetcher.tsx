@@ -75,7 +75,7 @@ export default function MarketDataFetcher() {
     },
   };
 
-  const chartData = history.slice(-200);
+  const chartData = history ? history.slice(-200) : history;
 
   return (
     <div className="p-4">
@@ -111,7 +111,7 @@ export default function MarketDataFetcher() {
       )}
 
       {/* Chart Section */}
-      {chartData.length > 1 && data && history && insights && (
+      {chartData && chartData.length > 1 && data && history && insights && (
         <div className="mt-10">
           <ChartContainer
             config={chartConfig}
