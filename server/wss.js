@@ -112,6 +112,24 @@ async function fetchYFinanceInsights(symbol) {
   return res;
 }
 
+async function fetchYFinanceMeta(symbol, chartIn) {
+  let chart = chartIn;
+  if (!chart) {
+    chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+  }
+  const meta = chart.chart.result[0].meta;
+  // return meta
+
+  return {
+    shortName: meta.shortName ?? "N/A",
+    price: meta.regularMarketPrice ?? "N/A",
+    instrumentType: meta.instrumentType ?? "N/A",
+    previousClose: meta.previousClose ?? "N/A",
+    marketHigh: meta.regularMarketDayHigh ?? "N/A",
+    volume: meta.regularMarketVolume ?? "N/A"
+  }
+}
+
 async function fetchChartData(symbol, chartIn) {
   let chart = chartIn;
   if (!chart) {
@@ -123,13 +141,10 @@ async function fetchChartData(symbol, chartIn) {
   const price = quotes.close[latestIdx] ?? 0;
   const newPrice = Number(price.toFixed(2));
 
-  const meta = chart.chart.result[0].meta;
-
   const tick = {
     price: newPrice,
     volume: quotes.volume[latestIdx],
     ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
-    meta: meta,
   };
 
   return tick;
@@ -216,6 +231,20 @@ wss.on("connection", (ws, req) => {
             insightsRes = null;
           }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
+        } catch (err) {
+          // ws.send(JSON.stringify({ type: "insights", data: null }));
+          ws.send(JSON.stringify({ type: "error", error: err.message }));
+        }
+
+        // Send Meta Data
+        try {
+          let metaRes = {};
+          if (platform == "yfinance") {
+            metaRes = await fetchYFinanceMeta(symbol, chart);
+          } else {
+            metaRes = null;
+          }
+          ws.send(JSON.stringify({ type: "meta", data: metaRes }));
         } catch (err) {
           // ws.send(JSON.stringify({ type: "insights", data: null }));
           ws.send(JSON.stringify({ type: "error", error: err.message }));

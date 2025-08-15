@@ -26,9 +26,11 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
 }) => {
   const [symbol, setSymbol] = useState("^HSI");
   const [data, setData] = useState<any>(null);
+  const [meta, setMeta] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isEquity, setIsEquity] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   const startWebSocket = () => {
@@ -74,6 +76,9 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       } else if (msg.type === "insights") {
         setInsights(msg.data);
         console.log("insights: ", msg.data);
+      } else if (msg.type === "meta") {
+        setMeta(msg.data);
+        console.log("meta: ", msg.data);
       }
     };
 
@@ -90,6 +95,14 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       label: "Market Price",
     },
   };
+
+  useEffect(() => {
+    if (meta && meta.instrumentType === "EQUITY") {
+      setIsEquity(true);
+    } else {
+      setIsEquity(false);
+    }
+  }, [meta]);
 
   const chartData = history ? history.slice(-200) : history;
 
@@ -114,10 +127,10 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       </div>
 
       {/* Title Section */}
-      {data && history && insights && (
+      {insights && meta && !loading && (
         <div className="flex gap-x-3">
-          {/* <InfoCard data={data.meta} /> */}
-          {data.meta.instrumentType === "EQUITY" && insights && (
+          <InfoCard data={meta} />
+          {isEquity && insights && (
             <>
               <ValuationCard data={insights} />
               <OutlookCard data={insights} />
@@ -127,7 +140,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       )}
 
       {/* Chart Section */}
-      {chartData && chartData.length > 1 && (
+      {chartData && chartData.length > 1 && !loading && (
         <div className="mt-10">
           <ChartContainer
             config={chartConfig}

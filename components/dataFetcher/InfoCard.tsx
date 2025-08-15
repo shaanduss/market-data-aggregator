@@ -21,11 +21,11 @@ function formatMarketCap(value: number): string {
 }
 
 const EquityData = (data: any) => {
-  const shortName = data.shortName ?? "N/A";
-  const price = Number(data.regularMarketPrice).toLocaleString() ?? "N/A"
-  const instrumentType = data.instrumentType ?? "N/A"
-  const previousClose = Number(data.previousClose).toLocaleString() ?? "N/A"
-  const volume = Number(data.regularMarketVolume).toLocaleString() ?? "N/A"
+  const shortName = data.shortName;
+  const price = (data.price == "N/A") ? "N/A" : Number(data.price).toLocaleString();
+  const instrumentType = data.instrumentType
+  const previousClose = (data.previousClose == "N/A") ? "N/A" : Number(data.previousClose).toLocaleString();
+  const volume = (data.volume == "N/A") ? "N/A" : Number(data.volume).toLocaleString();
 
   return {
     title: shortName,
@@ -49,11 +49,11 @@ const EquityData = (data: any) => {
 };
 
 const IndexData = (data: any) => {
-  const shortName = data.shortName ?? "N/A";
-  const price = Number(data.regularMarketPrice).toLocaleString() ?? "N/A"
-  const instrumentType = data.instrumentType ?? "N/A"
-  const previousClose = Number(data.previousClose).toLocaleString() ?? "N/A"
-  const marketHigh = Number(data.regularMarketDayHigh).toLocaleString() ?? "N/A"
+  const shortName = data.shortName;
+  const price = (data.price == "N/A") ? "N/A" : Number(data.price).toLocaleString();
+  const instrumentType = data.instrumentType
+  const previousClose = (data.previousClose == "N/A") ? "N/A" : Number(data.previousClose).toLocaleString();
+  const marketHigh = (data.marketHigh == "N/A") ? "N/A" : Number(data.marketHigh).toLocaleString();
 
   return {
     title: shortName,
