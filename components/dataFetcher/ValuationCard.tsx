@@ -9,7 +9,6 @@ interface ValuationCardProps {
 }
 
 const cardData = (data: any) => {
-
   return {
     title: "Valuation",
     titleValue: data.valuationDesc ?? "...",

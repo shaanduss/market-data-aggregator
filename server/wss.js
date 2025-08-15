@@ -126,8 +126,8 @@ async function fetchYFinanceMeta(symbol, chartIn) {
     instrumentType: meta.instrumentType ?? "N/A",
     previousClose: meta.previousClose ?? "N/A",
     marketHigh: meta.regularMarketDayHigh ?? "N/A",
-    volume: meta.regularMarketVolume ?? "N/A"
-  }
+    volume: meta.regularMarketVolume ?? "N/A",
+  };
 }
 
 async function fetchChartData(symbol, chartIn) {

@@ -16,18 +16,15 @@ const cardData = (data: any) => {
     sideBlocks: [
       {
         label: "Short-Term Events",
-        value:
-          data.shortTerm,
+        value: data.shortTerm,
       },
       {
         label: "Mid-Term Events",
-        value:
-          data.midTerm,
+        value: data.midTerm,
       },
       {
         label: "Long-Term Score",
-        value:
-          data.longTerm,
+        value: data.longTerm,
       },
     ],
   } as FinancialCardProps;
