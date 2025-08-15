@@ -51,20 +51,33 @@ async function fetchYFinanceHistory(symbol) {
 
 async function fetchYFinanceInsights(symbol) {
   const insightsRes = await retryFetch(YAHOO_INSIGHTS(symbol), {}, 3, 1000);
-  const result = insightsRes.finance.result
-  const recommendation = result.instrumentInfo.recommendation ?? null
-  const valuation = result.instrumentInfo.valuation ??null
+  const result = insightsRes.finance.result;
+  const recommendation = result.instrumentInfo.recommendation ?? null;
+  const valuation = result.instrumentInfo.valuation ?? null;
+  const technicalEvents = result.instrumentInfo.technicalEvents ?? null;
 
-  const targetPrice = recommendation.targetPrice ?? "N/A"
-  const rating = recommendation.rating ?? "N/A"
-  const provider = recommendation.provider ?? "N/A"
-  const valuationDesc = valuation.description ?? "N/A"
+  // ValuationCard Data
+  const targetPrice = recommendation.targetPrice ?? "N/A";
+  const rating = recommendation.rating ?? "N/A";
+  const provider = recommendation.provider ?? "N/A";
+  const valuationDesc = valuation.description ?? "N/A";
+
+  // Outlook Card Data
+  const sectorInfo = result.companySnapshot.sectorInfo ?? null;
+  const shortTerm = String(technicalEvents.shortTerm ?? "N/A").toUpperCase();
+  const midTerm = String(technicalEvents.midTerm ?? "N/A").toUpperCase();
+  const longTerm = String(technicalEvents.longTerm ?? "N/A").toUpperCase();
+
   const res = {
     targetPrice: targetPrice,
     rating: rating,
     provider: provider,
-    valuationDesc: valuationDesc
-  }
+    valuationDesc: valuationDesc,
+    sectorInfo: sectorInfo,
+    shortTerm: shortTerm,
+    midTerm: midTerm,
+    longTerm: longTerm,
+  };
 
   return res;
 }
@@ -190,6 +203,8 @@ wss.on("connection", (ws, req) => {
       await saveMarketData(symbol, tick);
       ws.send(JSON.stringify({ type: "live", data: tick }));
       lastPrice = newPrice;
+    } else {
+      ws.send(JSON.stringify({ type: "live", data: null }));
     }
   }
 

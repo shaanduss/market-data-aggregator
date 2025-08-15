@@ -18,10 +18,12 @@ import { ValuationCard } from "@/components/dataFetcher/ValuationCard";
 import { toast } from "sonner";
 
 interface MarketDataFetcherProps {
-  platform: string
+  platform: string;
 }
 
-export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) => {
+export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
+  platform,
+}) => {
   const [symbol, setSymbol] = useState("^BSESN");
   const [data, setData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
@@ -38,7 +40,9 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "config", symbol, platform, interval: 5000 }));
+      ws.send(
+        JSON.stringify({ type: "config", symbol, platform, interval: 5000 })
+      );
     };
 
     ws.onmessage = (event) => {
@@ -53,12 +57,20 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
 
       if (msg.type === "history") {
         setHistory(msg.data);
-        setLoading(false);
         console.log("history: ", msg.data);
       } else if (msg.type === "live") {
-        setData(msg.data);
-        setHistory((h) => [...h, { time: msg.data.ts, price: msg.data.price }]);
+        // When there are no price changes
+        // WebSocket sends null data
+        if (msg.data != null) {
+          setData(msg.data);
+          setHistory((h) => [
+            ...h,
+            { time: msg.data.ts, price: msg.data.price },
+          ]);
+        }
         console.log("data: ", msg.data);
+        // Last WebSocket message is always of "live" type
+        setLoading(false);
       } else if (msg.type === "insights") {
         setInsights(msg.data);
         console.log("insights: ", msg.data);
@@ -108,14 +120,14 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
           {data.meta.instrumentType === "EQUITY" && insights && (
             <>
               <ValuationCard data={insights} />
-              {/* <OutlookCard data={insights} /> */}
+              <OutlookCard data={insights} />
             </>
           )}
         </div>
       )}
 
       {/* Chart Section */}
-      {chartData && chartData.length > 1 && data && history && insights && (
+      {chartData && chartData.length > 1 && (
         <div className="mt-10">
           <ChartContainer
             config={chartConfig}
@@ -149,4 +161,4 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
       )}
     </div>
   );
-}
+};

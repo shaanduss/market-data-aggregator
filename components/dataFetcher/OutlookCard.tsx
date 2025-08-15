@@ -11,23 +11,23 @@ interface OutlookCardProps {
 const cardData = (data: any) => {
   return {
     title: "Sector",
-    titleValue: data.companySnapshot.sectorInfo ?? "N/A",
+    titleValue: data.sectorInfo,
     icon: <Factory className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Short-Term Events",
         value:
-          data.instrumentInfo.technicalEvents.shortTerm.toUpperCase() ?? "N/A",
+          data.shortTerm,
       },
       {
         label: "Mid-Term Events",
         value:
-          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ?? "N/A",
+          data.midTerm,
       },
       {
         label: "Long-Term Score",
         value:
-          data.instrumentInfo.technicalEvents.midTerm.toUpperCase() ?? "N/A",
+          data.longTerm,
       },
     ],
   } as FinancialCardProps;
