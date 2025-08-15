@@ -16,16 +16,16 @@ import { InfoCard } from "@/components/dataFetcher/InfoCard";
 import { OutlookCard } from "@/components/dataFetcher/OutlookCard";
 import { ValuationCard } from "@/components/dataFetcher/ValuationCard";
 import { toast } from "sonner";
+import { platforms } from "@/app/types";
 
 interface MarketDataFetcherProps {
-  platform: string;
+  platform: typeof platforms[number];
 }
 
 export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   platform,
 }) => {
   const [symbol, setSymbol] = useState("");
-  const [data, setData] = useState<any>(null);
   const [meta, setMeta] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);
@@ -64,7 +64,6 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
         // When there are no price changes
         // WebSocket sends null data
         if (msg.data != null) {
-          setData(msg.data);
           setHistory((h) => [
             ...h,
             { time: msg.data.ts, price: msg.data.price },
@@ -97,14 +96,14 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   };
 
   useEffect(() => {
-    if (meta && meta.instrumentType === "EQUITY") {
+    if (meta && (meta.instrumentType === "EQUITY")) {
       setIsEquity(true);
     } else {
       setIsEquity(false);
     }
   }, [meta]);
 
-  const chartData = history ? history.slice(-200) : history;
+  const chartData = history;
 
   return (
     <div className="p-4 overflow-x-hidden">
@@ -127,13 +126,13 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       </div>
 
       {/* Title Section */}
-      {insights && meta && !loading && (
+      {insights && !loading && (
         <div className="grid grid-cols-2 xl:grid-cols-3 mt-4 gap-5">
           <InfoCard data={meta} />
-          {isEquity && insights && (
+          {insights && (
             <>
-              <ValuationCard data={insights} />
-              <OutlookCard data={insights} />
+              <ValuationCard data={insights} platform={platform}/>
+              <OutlookCard data={insights} platform={platform}/>
             </>
           )}
         </div>

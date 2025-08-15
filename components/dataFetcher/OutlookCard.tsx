@@ -1,3 +1,4 @@
+import { platforms } from "@/app/types";
 import {
   FinancialCard,
   FinancialCardProps,
@@ -6,9 +7,10 @@ import { Factory } from "lucide-react";
 
 interface OutlookCardProps {
   data: any;
+  platform: (typeof platforms)[number];
 }
 
-const cardData = (data: any) => {
+const yFinanceCardData = (data: any) => {
   return {
     title: "Sector",
     titleValue: data.sectorInfo,
@@ -30,6 +32,11 @@ const cardData = (data: any) => {
   } as FinancialCardProps;
 };
 
-export const OutlookCard: React.FC<OutlookCardProps> = ({ data }) => {
-  return <FinancialCard {...cardData(data)} />;
+
+const cardData = (data: any, platform: typeof platforms[number]) => {
+  return yFinanceCardData(data)
+}
+
+export const OutlookCard: React.FC<OutlookCardProps> = ({ data, platform }) => {
+  return <FinancialCard {...cardData(data, platform)} />;
 };
