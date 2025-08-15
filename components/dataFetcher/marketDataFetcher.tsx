@@ -38,7 +38,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "config", symbol, interval: 5000 }));
+      ws.send(JSON.stringify({ type: "config", symbol, platform, interval: 5000 }));
     };
 
     ws.onmessage = (event) => {
@@ -104,11 +104,11 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({platform}) 
       {/* Title Section */}
       {data && history && insights && (
         <div className="flex gap-x-3">
-          <InfoCard data={data.meta} />
+          {/* <InfoCard data={data.meta} /> */}
           {data.meta.instrumentType === "EQUITY" && insights && (
             <>
-              <ValuationCard data={insights.finance.result} />
-              <OutlookCard data={insights.finance.result} />
+              <ValuationCard data={insights} />
+              {/* <OutlookCard data={insights} /> */}
             </>
           )}
         </div>

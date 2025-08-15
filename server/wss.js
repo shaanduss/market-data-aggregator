@@ -35,13 +35,46 @@ async function saveMarketData(symbol, data) {
   await supabase.from("market_ticks").insert([{ symbol, ...data }]);
 }
 
+async function fetchYFinanceHistory(symbol) {
+  const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+  const timestamps = chart.chart.result[0].timestamp;
+  const closes = chart.chart.result[0].indicators.quote[0].close;
+
+  // Create Object to send as message
+  const historyData = timestamps.map((t, idx) => ({
+    time: new Date(t * 1000).toISOString(),
+    price: Number(closes[idx].toFixed(2)),
+  }));
+
+  return historyData;
+}
+
+async function fetchYFinanceInsights(symbol) {
+  const insightsRes = await retryFetch(YAHOO_INSIGHTS(symbol), {}, 3, 1000);
+  const result = insightsRes.finance.result
+  const recommendation = result.instrumentInfo.recommendation ?? null
+  const valuation = result.instrumentInfo.valuation ??null
+
+  const targetPrice = recommendation.targetPrice ?? "N/A"
+  const rating = recommendation.rating ?? "N/A"
+  const provider = recommendation.provider ?? "N/A"
+  const valuationDesc = valuation.description ?? "N/A"
+  const res = {
+    targetPrice: targetPrice,
+    rating: rating,
+    provider: provider,
+    valuationDesc: valuationDesc
+  }
+
+  return res;
+}
+
 // Yahoo Finance helpers
 const YAHOO_CHART = (symbol) =>
   `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=7d`;
 
 const YAHOO_INSIGHTS = (symbol) =>
   `https://query1.finance.yahoo.com/ws/insights/v1/finance/insights?symbol=${symbol}`;
-
 
 wss.on("connection", (ws, req) => {
   ws.isAlive = true;
@@ -59,6 +92,7 @@ wss.on("connection", (ws, req) => {
   }
 
   let symbol = "^BSESN";
+  let platform = "";
   let interval = 5000;
   let timer;
 
@@ -67,6 +101,7 @@ wss.on("connection", (ws, req) => {
       const {
         type,
         symbol: userSymbol,
+        platform: userPlatform,
         interval: userInterval,
       } = JSON.parse(message);
       if (type === "config") {
@@ -74,19 +109,25 @@ wss.on("connection", (ws, req) => {
         if (userInterval) {
           interval = Math.max(1000, Math.min(60000, Number(userInterval)));
         }
+        if (userPlatform) {
+          platform = userPlatform;
+        } else {
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              data: "You must provide a platform to fetch data from",
+            })
+          );
+        }
 
         // Send history
         try {
-          const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
-          const timestamps = chart.chart.result[0].timestamp;
-          const closes = chart.chart.result[0].indicators.quote[0].close;
-
-          // Create Object to send as message
-          const historyData = timestamps.map((t, idx) => ({
-            time: new Date(t * 1000).toISOString(),
-            price: Number(closes[idx].toFixed(2)),
-          }));
-
+          let historyData = {};
+          if (platform == "yfinance") {
+            historyData = await fetchYFinanceHistory(symbol);
+          } else {
+            historyData = null;
+          }
           ws.send(JSON.stringify({ type: "history", data: historyData }));
         } catch {
           ws.send(JSON.stringify({ type: "history", data: null }));
@@ -94,12 +135,12 @@ wss.on("connection", (ws, req) => {
 
         // Send insights
         try {
-          const insightsRes = await retryFetch(
-            YAHOO_INSIGHTS(symbol),
-            {},
-            3,
-            1000
-          );
+          let insightsRes = {};
+          if (platform == "yfinance") {
+            insightsRes = await fetchYFinanceInsights(symbol);
+          } else {
+            insightsRes = null;
+          }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
         } catch {
           ws.send(JSON.stringify({ type: "insights", data: null }));
@@ -107,11 +148,10 @@ wss.on("connection", (ws, req) => {
 
         // Send Chart Data
         try {
-          await fetchChartData()
+          await fetchChartData();
         } catch (err) {
           ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
-
 
         // Start streaming live ticks
         clearTimeout(timer);
@@ -143,8 +183,7 @@ wss.on("connection", (ws, req) => {
       price: newPrice,
       volume: quotes.volume[latestIdx],
       ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
-      meta: meta
-
+      meta: meta,
     };
 
     if (newPrice != lastPrice) {
@@ -156,7 +195,7 @@ wss.on("connection", (ws, req) => {
 
   async function streamLive() {
     try {
-      await fetchChartData()
+      await fetchChartData();
       timer = setTimeout(streamLive, interval);
     } catch (err) {
       ws.send(JSON.stringify({ type: "error", error: err.message }));
