@@ -32,9 +32,34 @@ const yFinanceCardData = (data: any) => {
   } as FinancialCardProps;
 };
 
+const alphaVantageCardData = (data: any) => {
+  return {
+    title: "Sector",
+    titleValue: data.sectorInfo,
+    icon: <Factory className="h-4 w-4" />,
+    sideBlocks: [
+      {
+        label: "Short-Term Events",
+        value: data.shortTerm,
+      },
+      {
+        label: "Mid-Term Events",
+        value: data.midTerm,
+      },
+      {
+        label: "Long-Term Score",
+        value: data.longTerm,
+      },
+    ],
+  } as FinancialCardProps;
+};
 
 const cardData = (data: any, platform: typeof platforms[number]) => {
-  return yFinanceCardData(data)
+  if (platform == "alpha-vantage") {
+    return alphaVantageCardData(data)
+  } else {
+    return yFinanceCardData(data)
+  }
 }
 
 export const OutlookCard: React.FC<OutlookCardProps> = ({ data, platform }) => {

@@ -1,3 +1,5 @@
+// Load .env
+require("dotenv").config();
 // Fetch Yahoo Finance Helpers
 const {
   fetchYFinanceHistory,
@@ -7,17 +9,14 @@ const {
 } = require("./yfinance.js");
 
 const {
-  fetchAlphaVantageHistory,
   fetchAlphaVantageInsights,
   fetchAlphaVantageMeta,
-  fetchAlphaVantageChartData,
-  ALPHAVANTAGE_TIME_SERIES,
+  ALPHAVANTAGE_OVERVIEW,
 } = require("./alpha-vantage.js");
 
 const { retryFetch, YAHOO_CHART } = require("./helpers.js");
 
 const WebSocket = require("ws");
-require("dotenv").config();
 
 // Supabase Related Variables
 const { createClient } = require("@supabase/supabase-js");
@@ -91,11 +90,12 @@ wss.on("connection", (ws, req) => {
             chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
           } else if (platform == "alpha-vantage") {
             chart = await retryFetch(
-              ALPHAVANTAGE_TIME_SERIES(symbol),
+              ALPHAVANTAGE_OVERVIEW(symbol),
               {},
               3,
               1000
             );
+            console.log(JSON.stringify(chart, null, 2));
           }
         } catch (err) {
           ws.send(JSON.stringify({ type: "error", error: err.message }));
@@ -103,15 +103,9 @@ wss.on("connection", (ws, req) => {
 
         // Send history
         try {
-          let historyData = {};
-          if (platform == "yfinance") {
-            historyData = await fetchYFinanceHistory(symbol, chart);
-          } else if (platform == "alpha-vantage") {
-            historyData = await fetchAlphaVantageHistory(symbol, chart);
-          }
+          const historyData = await fetchYFinanceHistory(symbol, chart);
           ws.send(JSON.stringify({ type: "history", data: historyData }));
         } catch (err) {
-          // ws.send(JSON.stringify({ type: "history", data: null }));
           ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
 
@@ -121,11 +115,10 @@ wss.on("connection", (ws, req) => {
           if (platform == "yfinance") {
             insightsRes = await fetchYFinanceInsights(symbol);
           } else if (platform == "alpha-vantage") {
-            insightsRes = await fetchAlphaVantageInsights(symbol);
+            insightsRes = await fetchAlphaVantageInsights(symbol, chart);
           }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
         } catch (err) {
-          // ws.send(JSON.stringify({ type: "insights", data: null }));
           ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
 
@@ -139,7 +132,6 @@ wss.on("connection", (ws, req) => {
           }
           ws.send(JSON.stringify({ type: "meta", data: metaRes }));
         } catch (err) {
-          // ws.send(JSON.stringify({ type: "insights", data: null }));
           ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
 
@@ -162,14 +154,10 @@ wss.on("connection", (ws, req) => {
 
   async function streamLive() {
     try {
-      if (platform == "yfinance") {
-        tick = await fetchYFinanceChartData(symbol);
-      } else if (platform == "alpha-vantage") {
-        tick = await fetchAlphaVantageChartData(symbol);
-      }
+      tick = await fetchYFinanceChartData(symbol);
 
       if (tick.price != lastPrice) {
-        // await saveMarketData(symbol, tick);
+        await saveMarketData(symbol, tick);
         ws.send(JSON.stringify({ type: "live", data: tick }));
         lastPrice = tick.price;
       } else {

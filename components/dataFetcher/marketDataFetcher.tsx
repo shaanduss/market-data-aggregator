@@ -96,7 +96,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   };
 
   useEffect(() => {
-    if (meta && (meta.instrumentType === "EQUITY")) {
+    if (meta && (meta.instrumentType === "EQUITY" || meta.instrumentType == "Common Stock")) {
       setIsEquity(true);
     } else {
       setIsEquity(false);
@@ -129,7 +129,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       {insights && !loading && (
         <div className="grid grid-cols-2 xl:grid-cols-3 mt-4 gap-5">
           <InfoCard data={meta} />
-          {insights && (
+          {isEquity && insights && (
             <>
               <ValuationCard data={insights} platform={platform}/>
               <OutlookCard data={insights} platform={platform}/>
