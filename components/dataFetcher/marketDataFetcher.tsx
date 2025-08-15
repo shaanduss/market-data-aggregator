@@ -24,7 +24,7 @@ interface MarketDataFetcherProps {
 export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   platform,
 }) => {
-  const [symbol, setSymbol] = useState("^HSI");
+  const [symbol, setSymbol] = useState("");
   const [data, setData] = useState<any>(null);
   const [meta, setMeta] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
@@ -96,6 +96,15 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
     },
   };
 
+  const cardBoxStyling = () => {
+    const baseStyle = "flex mt-4 justify-between"
+    if (isEquity) {
+      return baseStyle
+    } else {
+      return baseStyle + " items-center w-full justify-center"
+    }
+  }
+
   useEffect(() => {
     if (meta && meta.instrumentType === "EQUITY") {
       setIsEquity(true);
@@ -107,9 +116,9 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   const chartData = history ? history.slice(-200) : history;
 
   return (
-    <div className="p-4">
+    <div className="p-4 overflow-x-hidden">
       <h1 className="font-bold text-xl">STOCK SEARCH</h1>
-      <div className="flex gap-x-7 mt-2">
+      <div className="flex gap-x-7 mt-2 w-fit lg:w-md">
         <Input
           type="text"
           value={symbol}
@@ -128,7 +137,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
 
       {/* Title Section */}
       {insights && meta && !loading && (
-        <div className="flex gap-x-3">
+        <div className={cardBoxStyling()}>
           <InfoCard data={meta} />
           {isEquity && insights && (
             <>
