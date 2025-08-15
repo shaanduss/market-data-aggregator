@@ -24,7 +24,7 @@ interface MarketDataFetcherProps {
 export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   platform,
 }) => {
-  const [symbol, setSymbol] = useState("^BSESN");
+  const [symbol, setSymbol] = useState("^HSI");
   const [data, setData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
   const [history, setHistory] = useState<{ time: string; price: number }[]>([]);

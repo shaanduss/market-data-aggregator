@@ -35,51 +35,104 @@ async function saveMarketData(symbol, data) {
   await supabase.from("market_ticks").insert([{ symbol, ...data }]);
 }
 
-async function fetchYFinanceHistory(symbol) {
-  const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+async function fetchYFinanceHistory(symbol, chartIn) {
+  let chart = chartIn;
+  if (!chart) {
+    chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+  }
   const timestamps = chart.chart.result[0].timestamp;
   const closes = chart.chart.result[0].indicators.quote[0].close;
 
-  // Create Object to send as message
-  const historyData = timestamps.map((t, idx) => ({
-    time: new Date(t * 1000).toISOString(),
-    price: Number(closes[idx].toFixed(2)),
-  }));
+  // Since the market does not always have data
+  // Ensure that we find the first non-null price
+  let lastPrice = 0;
+  timestamps.some((_, idx) => {
+    if (closes[idx] != null) {
+      lastPrice = closes[idx];
+      return true; // stops the loop
+    }
+    return false;
+  });
+
+  const historyData = timestamps.map((t, idx) => {
+    // If the value isn't null, save the current price
+    // Return new data
+    if (closes[idx] != null) {
+      lastPrice = closes[idx];
+      return {
+        time: new Date(t * 1000).toISOString(),
+        price: Number(closes[idx].toFixed(2)),
+      };
+    } else {
+      // If the price is null
+      // Use the last available price
+      return {
+        time: new Date(t * 1000).toISOString(),
+        price: lastPrice,
+      };
+    }
+  });
 
   return historyData;
 }
 
 async function fetchYFinanceInsights(symbol) {
   const insightsRes = await retryFetch(YAHOO_INSIGHTS(symbol), {}, 3, 1000);
+
   const result = insightsRes.finance.result;
-  const recommendation = result.instrumentInfo.recommendation ?? null;
-  const valuation = result.instrumentInfo.valuation ?? null;
-  const technicalEvents = result.instrumentInfo.technicalEvents ?? null;
+
+  // Safely access nested properties
+  const recommendation = result?.instrumentInfo?.recommendation ?? null;
+  const valuation = result?.instrumentInfo?.valuation ?? null;
+  const technicalEvents = result?.instrumentInfo?.technicalEvents ?? null;
 
   // ValuationCard Data
-  const targetPrice = recommendation.targetPrice ?? "N/A";
-  const rating = recommendation.rating ?? "N/A";
-  const provider = recommendation.provider ?? "N/A";
-  const valuationDesc = valuation.description ?? "N/A";
+  const targetPrice = recommendation?.targetPrice ?? "N/A";
+  const rating = recommendation?.rating ?? "N/A";
+  const provider = recommendation?.provider ?? "N/A";
+  const valuationDesc = valuation?.description ?? "N/A";
 
   // Outlook Card Data
-  const sectorInfo = result.companySnapshot.sectorInfo ?? null;
-  const shortTerm = String(technicalEvents.shortTerm ?? "N/A").toUpperCase();
-  const midTerm = String(technicalEvents.midTerm ?? "N/A").toUpperCase();
-  const longTerm = String(technicalEvents.longTerm ?? "N/A").toUpperCase();
+  const sectorInfo = result?.companySnapshot?.sectorInfo ?? "N/A";
+  const shortTerm = String(technicalEvents?.shortTerm ?? "N/A").toUpperCase();
+  const midTerm = String(technicalEvents?.midTerm ?? "N/A").toUpperCase();
+  const longTerm = String(technicalEvents?.longTerm ?? "N/A").toUpperCase();
 
   const res = {
-    targetPrice: targetPrice,
-    rating: rating,
-    provider: provider,
-    valuationDesc: valuationDesc,
-    sectorInfo: sectorInfo,
-    shortTerm: shortTerm,
-    midTerm: midTerm,
-    longTerm: longTerm,
+    targetPrice,
+    rating,
+    provider,
+    valuationDesc,
+    sectorInfo,
+    shortTerm,
+    midTerm,
+    longTerm,
   };
 
   return res;
+}
+
+async function fetchChartData(symbol, chartIn) {
+  let chart = chartIn;
+  if (!chart) {
+    chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+  }
+  const quotes = chart.chart.result[0].indicators.quote[0];
+  const timestamps = chart.chart.result[0].timestamp;
+  const latestIdx = quotes.close.length - 1;
+  const price = quotes.close[latestIdx] ?? 0;
+  const newPrice = Number(price.toFixed(2));
+
+  const meta = chart.chart.result[0].meta;
+
+  const tick = {
+    price: newPrice,
+    volume: quotes.volume[latestIdx],
+    ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
+    meta: meta,
+  };
+
+  return tick;
 }
 
 // Yahoo Finance helpers
@@ -133,17 +186,25 @@ wss.on("connection", (ws, req) => {
           );
         }
 
+        let chart = {};
+        try {
+          chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+        } catch (err) {
+          ws.send(JSON.stringify({ type: "error", error: err.message }));
+        }
+
         // Send history
         try {
           let historyData = {};
           if (platform == "yfinance") {
-            historyData = await fetchYFinanceHistory(symbol);
+            historyData = await fetchYFinanceHistory(symbol, chart);
           } else {
             historyData = null;
           }
           ws.send(JSON.stringify({ type: "history", data: historyData }));
-        } catch {
-          ws.send(JSON.stringify({ type: "history", data: null }));
+        } catch (err) {
+          // ws.send(JSON.stringify({ type: "history", data: null }));
+          ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
 
         // Send insights
@@ -155,13 +216,14 @@ wss.on("connection", (ws, req) => {
             insightsRes = null;
           }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
-        } catch {
-          ws.send(JSON.stringify({ type: "insights", data: null }));
+        } catch (err) {
+          // ws.send(JSON.stringify({ type: "insights", data: null }));
+          ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
 
         // Send Chart Data
         try {
-          await fetchChartData();
+          await fetchChartData(symbol, chart);
         } catch (err) {
           ws.send(JSON.stringify({ type: "error", error: err.message }));
         }
@@ -183,34 +245,16 @@ wss.on("connection", (ws, req) => {
 
   ws.on("pong", () => (ws.isAlive = true));
 
-  async function fetchChartData() {
-    const chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
-    const quotes = chart.chart.result[0].indicators.quote[0];
-    const timestamps = chart.chart.result[0].timestamp;
-    const latestIdx = quotes.close.length - 1;
-    const newPrice = Number(quotes.close[latestIdx].toFixed(2));
-
-    const meta = chart.chart.result[0].meta;
-
-    const tick = {
-      price: newPrice,
-      volume: quotes.volume[latestIdx],
-      ts: new Date(timestamps[latestIdx] * 1000).toISOString(),
-      meta: meta,
-    };
-
-    if (newPrice != lastPrice) {
-      await saveMarketData(symbol, tick);
-      ws.send(JSON.stringify({ type: "live", data: tick }));
-      lastPrice = newPrice;
-    } else {
-      ws.send(JSON.stringify({ type: "live", data: null }));
-    }
-  }
-
   async function streamLive() {
     try {
-      await fetchChartData();
+      tick = await fetchChartData(symbol);
+      if (tick.price != lastPrice) {
+        await saveMarketData(symbol, tick);
+        ws.send(JSON.stringify({ type: "live", data: tick }));
+        lastPrice = tick.price;
+      } else {
+        ws.send(JSON.stringify({ type: "live", data: null }));
+      }
       timer = setTimeout(streamLive, interval);
     } catch (err) {
       ws.send(JSON.stringify({ type: "error", error: err.message }));
