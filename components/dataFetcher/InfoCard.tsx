@@ -21,11 +21,11 @@ function formatMarketCap(value: number): string {
 }
 
 const EquityData = (data: any) => {
-  const shortName = data.shortName;
-  const price = (data.price == "N/A") ? "N/A" : Number(data.price).toLocaleString();
-  const instrumentType = data.instrumentType
-  const previousClose = (data.previousClose == "N/A") ? "N/A" : Number(data.previousClose).toLocaleString();
-  const volume = (data.volume == "N/A") ? "N/A" : Number(data.volume).toLocaleString();
+  const shortName = data?.shortName;
+  const price = (data?.price == "N/A") ? "N/A" : Number(data?.price).toLocaleString();
+  const instrumentType = data?.instrumentType
+  const previousClose = (data?.previousClose == "N/A") ? "N/A" : Number(data?.previousClose).toLocaleString();
+  const volume = (data?.volume == "N/A") ? "N/A" : Number(data?.volume).toLocaleString();
 
   return {
     title: shortName,
@@ -49,11 +49,11 @@ const EquityData = (data: any) => {
 };
 
 const IndexData = (data: any) => {
-  const shortName = data.shortName;
-  const price = (data.price == "N/A") ? "N/A" : Number(data.price).toLocaleString();
-  const instrumentType = data.instrumentType
-  const previousClose = (data.previousClose == "N/A") ? "N/A" : Number(data.previousClose).toLocaleString();
-  const marketHigh = (data.marketHigh == "N/A") ? "N/A" : Number(data.marketHigh).toLocaleString();
+  const shortName = data?.shortName;
+  const price = (data.price == "N/A") ? "N/A" : Number(data?.price).toLocaleString();
+  const instrumentType = data?.instrumentType
+  const previousClose = (data?.previousClose == "N/A") ? "N/A" : Number(data?.previousClose).toLocaleString();
+  const marketHigh = (data?.marketHigh == "N/A") ? "N/A" : Number(data?.marketHigh).toLocaleString();
 
   return {
     title: shortName,
@@ -77,7 +77,7 @@ const IndexData = (data: any) => {
 };
 
 const cardData = (data: any) => {
-  const instrumentType = data.instrumentType ?? "N/A"
+  const instrumentType = data?.instrumentType ?? "N/A"
   switch (instrumentType) {
     case "EQUITY":
       return EquityData(data);

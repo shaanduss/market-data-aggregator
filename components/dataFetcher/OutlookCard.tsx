@@ -13,20 +13,20 @@ interface OutlookCardProps {
 const yFinanceCardData = (data: any) => {
   return {
     title: "Sector",
-    titleValue: data.sectorInfo,
+    titleValue: data?.sectorInfo,
     icon: <Factory className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Short-Term Events",
-        value: data.shortTerm,
+        value: data?.shortTerm,
       },
       {
         label: "Mid-Term Events",
-        value: data.midTerm,
+        value: data?.midTerm,
       },
       {
         label: "Long-Term Score",
-        value: data.longTerm,
+        value: data?.longTerm,
       },
     ],
   } as FinancialCardProps;
@@ -35,20 +35,20 @@ const yFinanceCardData = (data: any) => {
 const alphaVantageCardData = (data: any) => {
   return {
     title: "Sector",
-    titleValue: data.sectorInfo,
+    titleValue: data?.sectorInfo,
     icon: <Factory className="h-4 w-4" />,
     sideBlocks: [
       {
-        label: "Short-Term Events",
-        value: data.shortTerm,
+        label: "Industry",
+        value: (data?.industry ?? "").slice(0, 14),
       },
       {
-        label: "Mid-Term Events",
-        value: data.midTerm,
+        label: "Exchange",
+        value: data?.exchange,
       },
       {
-        label: "Long-Term Score",
-        value: data.longTerm,
+        label: "Country",
+        value: data?.country,
       },
     ],
   } as FinancialCardProps;

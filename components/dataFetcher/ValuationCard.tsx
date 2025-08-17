@@ -13,20 +13,20 @@ interface ValuationCardProps {
 const yFinanceCardData = (data: any) => {
   return {
     title: "Valuation",
-    titleValue: data.valuationDesc ?? "...",
+    titleValue: data?.valuationDesc ?? "...",
     icon: <Coins className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Target Price",
-        value: data.targetPrice,
+        value: data?.targetPrice,
       },
       {
         label: "Rating",
-        value: data.rating,
+        value: data?.rating,
       },
       {
         label: "Provider",
-        value: data.provider,
+        value: data?.provider,
       },
     ],
   } as FinancialCardProps;
@@ -35,20 +35,20 @@ const yFinanceCardData = (data: any) => {
 const alphaVantageCardData = (data: any) => {
   return {
     title: "PE Ratio",
-    titleValue: data.PERatio ?? "...",
+    titleValue: data?.PERatio ?? "...",
     icon: <Coins className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Target Price",
-        value: "$" + data.targetPrice,
+        value: "$" + data?.targetPrice,
       },
       {
         label: "EPS",
-        value: "$" + data.eps,
+        value: "$" + data?.eps,
       },
       {
         label: "Dividend Yield",
-        value: data.dividendYield,
+        value: data?.dividendYield,
       },
     ],
   } as FinancialCardProps;
