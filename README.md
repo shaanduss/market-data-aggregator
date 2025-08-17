@@ -1,18 +1,49 @@
 # Market Data App
 
-This project is a **Next.js financial dashboard** for live equity analytics and charting, built with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A comprehensive **Next.js dashboard** for real-time US equities analytics, fundamental and sector metrics, using multiple free market data APIs. Built to deliver robust, user-friendly stock insights even in the face of real-world data provider limitations and rate-limiting.
+
+---
 
 ## Features
 
-- **Live market prices and charting:** Uses Yahoo Finance’s unofficial API for reliable real-time prices and historical data.
-- **Equity fundamentals:** Fetches PE ratio, EPS, dividend yield and more from Alpha Vantage, but only within strict limits.
-- **Hybrid history:** Loads price history from YFinance. For previously searched symbols, retrieves cached history from Supabase for quick access.
-- **Custom financial UI components:** Financial Cards visualize market/meta data for equities and indices.
-- **Real-time updates:** WebSocket integration for price/tick streaming.
+- **Live prices and basic chart data:**  
+  Streams real-time prices and recent chart history for US stocks using Yahoo Finance’s unofficial API (most reliable free source).
+
+- **Financial snapshot cards:**  
+  - _Meta Card:_ Displays ticker name, price, instrument type, previous close, high, volume (via Yahoo Finance, Finnhub, or Alpha Vantage).
+  - _Valuation Card:_ Shows PE ratio, EPS, dividend yield, and target price where available (Alpha Vantage for US stocks, fallback to Finnhub’s free fields like market cap/currency/shares).
+  - _Outlook Card:_ Renders sector/industry, exchange, country, IPO date (via Alpha Vantage, Finnhub, and Yahoo—cards auto-adapt to the platform).
+
+- **Multi-provider support and smart fallback:**  
+  - **Yahoo Finance:** Real-time and historical prices, sector, and technical fields.
+  - **Alpha Vantage:** Company fundamentals (very strict: 25 req/day, only static fields, no history, no live updates).
+  - **Finnhub:** Free access to company profile info, current price, sector, industry, exchange, IPO, currency, share outstanding, logo, but no historical candles/fundamentals.
+
+- **Hybrid History with Supabase:**  
+  Caches and reuses previously searched ticker history, reducing external API calls and improving user performance.
+
+- **Realtime front-end updates:**  
+  WebSocket server streams live price ticks and other market events to all connected users.
+
+- **Rich modular UI:**  
+  Reusable, platform-aware React financial cards with customized Lucide.dev icons. Design adapts automatically for equity, index, or provider.
+
+---
+
+## Data Sources
+
+| Provider        | Used for                                    | Free Limits                     |
+|-----------------|---------------------------------------------|---------------------------------|
+| Yahoo Finance   | Real-time & historical price, sector, volume| No official limit (unofficial)  |
+| Alpha Vantage   | Fundamentals (PE, EPS, dividend, sector)    | 25 req/day (no history)         |
+| Finnhub         | Price, company profile, meta/sector, logo   | No history/fundamentals for US, generous for context/meta |
+
+- **Note:** Only fields that are free and reliably available are used from each provider.  
+- **API keys** for Alpha Vantage and Finnhub are required (set in `.env`).
+
+---
 
 ## Getting Started
-
-Run the development server:
 
 ```bash
 npm run dev
@@ -22,57 +53,50 @@ yarn dev
 pnpm dev
 ```
 
+Visit [http://localhost:3000](http://localhost:3000) to use the app.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the dashboard.
+---
 
-You can edit the app by modifying `app/page.tsx`. Hot-reloading takes effect as you code.
+## Code Architecture
 
-The UI uses [Geist](https://vercel.com/font) via [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) for crisp text rendering.
+- **Backend (Node.js + WebSocket):**
+  - Fetches/sanitizes market data from the 3 APIs.
+  - Defensively handles API rate limiting, outages, and field absences.
+  - Streams market data as typed JSON to multiple frontend clients.
+  - Caches history and symbols in **Supabase** for fast reloads & historical display.
 
-## API Providers & Data Policy
+- **Frontend (Next.js + React):**
+  - Modular financial cards (`InfoCard`, `ValuationCard`, `OutlookCard`) with provider/data-type awareness.
+  - Displays context/currency/market structure for meta cards and sector/industry context for outlook cards.
+  - Chart consistently auto-updates from live ticks.
+  - Uses [Geist font](https://vercel.com/font) via [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) for sharp UI.
 
-### Yahoo Finance
+- **Provider logic:**
+  - All fetchers (`fetchYFinanceMeta`, `fetchAlphaVantageMeta`, `fetchFinnhubMeta`, etc.) are modular and call only those endpoints and fields guaranteed to be free and reliable.
+  - Data normalization code ensures cards always show something meaningful, or "N/A" if not available.
 
-- **Source of truth** for real-time market prices and historical chart data.
-- No official rate limits, but endpoint throttling and outages can occur due to unofficial usage.
-
-### Alpha Vantage
-
-- **Free tier limited to 25 requests/day.**
-- Useful for static fundamentals (PE ratio, EPS, dividend yield, etc).
-- _Does not provide price history or live updates on free plans._
-- **For all real-time and historical charting, we use Yahoo Finance.**
-
-### Supabase
-
-- Used for searching, caching, and serving history for previously fetched symbols.
-
-## Code Highlights
-
-- Built with Next.js App Router and React functional components.
-- Data fetchers are pluggable for multiple providers: `yfinance.js`, `alpha-vantage.js`.
-- Frontend cards (`InfoCard`, `ValuationCard`, `OutlookCard`) adapt to provider/platform/asset type.
-- All sensitive API keys must be set in `.env` (not committed).
-- Includes websocket support for pushing live prices to clients.
+---
 
 ## Limitations
 
-- **Alpha Vantage** is suitable only for reference/fundamental data; do not use for price history or streaming due to severe free tier limits.
-- **Yahoo Finance** unofficial endpoints may be subject to API changes or throttling, but are currently the most robust free option.
+- **Alpha Vantage:** Strictly 25 requests/day per API key. No real-time or historical price, limited to static "company overview" fields.
+- **Finnhub:** No history or in-depth fundamentals for US tickers on free plans; only live price and company meta/profile available.
+- **Yahoo Finance:** Unofficial; best source for history and live prices, but can change or rate-limit at any time.
+- **Reliability:** The system is designed to degrade gracefully, but free API providers can go down or change API fields arbitrarily.
+
+---
 
 ## Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Next.js Tutorial](https://nextjs.org/learn)
-- [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) — recommended for deployment.
-
-## Notes
-
-> **Why not Alpha Vantage for history or live prices?**
-> Free tier only allows 25 requests per day and does not support historical or live price data for US stocks. For all real-time features, we use Yahoo Finance’s unofficial endpoints as the backbone of market data.
+- [Supabase Docs](https://supabase.com/docs)
+- [Yahoo Finance API (unofficial)](https://query1.finance.yahoo.com)
+- [Alpha Vantage API](https://www.alphavantage.co/documentation/)
+- [Finnhub API](https://finnhub.io/docs/api)
 
 ---
 
-**Feedback and contributions welcome!**
+## Adding Your API Keys
 
-See [the Next.js GitHub repository](https://github.com/vercel/next.js) for more tips and best practices.
+Create a `.env` file in the root directory:
+
