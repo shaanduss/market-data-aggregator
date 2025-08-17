@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -7,7 +7,7 @@ import React from "react";
 // Define type for our array of blocks
 type sideBlocks = {
   label: string;
-  value: string;
+  value: string | ReactNode;
 };
 
 // Define all props
@@ -52,7 +52,11 @@ export const FinancialCard: FC<FinancialCardProps> = ({
               <React.Fragment key={`financial_card_${block.label}_${index}`}>
                 <div className="flex justify-between">
                   <Label className="text-gray-500">{block.label}</Label>
-                  <p className="font-semibold text-sm">{block.value}</p>
+                  {typeof block.value === "string" ? (
+                    <p className="font-semibold text-sm">{block.value}</p>
+                  ) : (
+                    <>{block.value}</>
+                  )}
                 </div>
                 {index != sideBlocks.length - 1 && <Separator />}
               </React.Fragment>

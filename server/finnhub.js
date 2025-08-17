@@ -28,12 +28,17 @@ async function fetchFinnhubMeta(symbol) {
 // Insights: limited to company context info (no fundamentals/analyst data)
 async function fetchFinnhubInsights(symbol) {
   const profile = await retryFetch(FINNHUB_PROFILE(symbol), {}, 3, 1000);
+  console.log(JSON.stringify(profile))
 
   return {
-    sectorInfo: profile.finnhubIndustry ?? "N/A", // closest Finnhub offers to sector
-    exchange: profile.exchange ?? "N/A",
-    country: profile.country ?? "N/A",
-    ipo: profile.ipo ?? "N/A",
+    sectorInfo: profile?.finnhubIndustry ?? "N/A", // closest Finnhub offers to sector
+    exchange: profile?.exchange ?? "N/A",
+    country: profile?.country ?? "N/A",
+    ipo: profile?.ipo ?? "N/A",
+    currency: profile?.currency ?? "N/A",
+    market_cap: profile?.marketCapitalization ?? "N/A",
+    shareOutstanding: profile?.shareOutstanding ?? "N/A",
+    logo: profile?.logo
   };
 }
 
@@ -42,8 +47,8 @@ async function fetchFinnhubChartData(symbol) {
   const quote = await retryFetch(FINNHUB_QUOTE(symbol), {}, 3, 1000);
 
   return {
-    price: quote.c ?? 0,
-    volume: quote.v ?? 0,
+    price: quote?.c ?? 0,
+    volume: quote?.v ?? 0,
     ts: new Date().toISOString(),
   };
 }

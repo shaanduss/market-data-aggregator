@@ -8,18 +8,6 @@ interface InfoCardProps {
   data: any;
 }
 
-function formatMarketCap(value: number): string {
-  const units = ["", "K", "M", "B", "T", "P", "E"];
-  let magnitude = 0;
-
-  while (Math.abs(value) >= 1000 && magnitude < units.length - 1) {
-    value /= 1000;
-    magnitude++;
-  }
-
-  return `${value.toFixed(2)}${units[magnitude]}`;
-}
-
 const EquityData = (data: any) => {
   const shortName = data?.shortName;
   const price = (data?.price == "N/A") ? "N/A" : Number(data?.price).toLocaleString();
