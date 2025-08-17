@@ -82,16 +82,16 @@ async function fetchYFinanceMeta(symbol, chartIn) {
   if (!chart) {
     chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
   }
-  const meta = chart.chart.result[0].meta;
+  const meta = chart?.chart?.result[0]?.meta;
   // return meta
 
   return {
-    shortName: meta.shortName ?? "N/A",
-    price: meta.regularMarketPrice ?? "N/A",
-    instrumentType: meta.instrumentType ?? "N/A",
-    previousClose: meta.previousClose ?? "N/A",
-    marketHigh: meta.regularMarketDayHigh ?? "N/A",
-    volume: meta.regularMarketVolume ?? "N/A",
+    shortName: meta?.shortName ?? "N/A",
+    price: meta?.regularMarketPrice ?? "N/A",
+    instrumentType: meta?.instrumentType ?? "N/A",
+    previousClose: meta?.previousClose ?? "N/A",
+    marketHigh: meta?.regularMarketDayHigh ?? "N/A",
+    volume: meta?.regularMarketVolume ?? "N/A",
   };
 }
 
@@ -100,11 +100,11 @@ async function fetchYFinanceChartData(symbol, chartIn) {
   if (!chart) {
     chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
   }
-  const quotes = chart.chart.result[0].indicators.quote[0];
-  const timestamps = chart.chart.result[0].timestamp;
-  const latestIdx = quotes.close.length - 1;
-  const price = quotes.close[latestIdx] ?? 0;
-  const newPrice = Number(price.toFixed(2));
+  const quotes = chart?.chart?.result[0]?.indicators?.quote[0];
+  const timestamps = chart?.chart?.result[0]?.timestamp;
+  const latestIdx = quotes?.close?.length - 1;
+  const price = quotes?.close[latestIdx] ?? 0;
+  const newPrice = Number(price?.toFixed(2));
 
   const tick = {
     price: newPrice,
