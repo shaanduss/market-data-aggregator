@@ -12,12 +12,18 @@ export default function Home() {
           <TabsTrigger value="alpha-vantage" className="cursor-pointer">
             Alpha Vantage
           </TabsTrigger>
+          <TabsTrigger value="finnhub" className="cursor-pointer">
+            FinnHub
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="yfinance">
           <MarketDataFetcher platform="yfinance" />
         </TabsContent>
         <TabsContent value="alpha-vantage">
           <MarketDataFetcher platform="alpha-vantage" />
+        </TabsContent>
+        <TabsContent value="finnhub">
+          <MarketDataFetcher platform="finnhub" />
         </TabsContent>
       </Tabs>
     </div>

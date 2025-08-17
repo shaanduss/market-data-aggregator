@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { platforms } from "@/app/types";
 
 interface MarketDataFetcherProps {
-  platform: typeof platforms[number];
+  platform: (typeof platforms)[number];
 }
 
 export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
@@ -96,7 +96,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
   };
 
   useEffect(() => {
-    if (meta && (meta.instrumentType === "EQUITY" || meta.instrumentType == "Common Stock")) {
+    if (!symbol.startsWith("^")) {
       setIsEquity(true);
     } else {
       setIsEquity(false);
@@ -131,8 +131,8 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
           <InfoCard data={meta} />
           {isEquity && insights && (
             <>
-              <ValuationCard data={insights} platform={platform}/>
-              <OutlookCard data={insights} platform={platform}/>
+              <ValuationCard data={insights} platform={platform} />
+              <OutlookCard data={insights} platform={platform} />
             </>
           )}
         </div>

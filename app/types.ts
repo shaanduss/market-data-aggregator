@@ -1,1 +1,1 @@
-export const platforms = ["yfinance", "alpha-vantage"] as const;
+export const platforms = ["yfinance", "alpha-vantage", "finnhub"] as const;

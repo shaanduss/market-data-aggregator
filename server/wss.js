@@ -14,6 +14,13 @@ const {
   ALPHAVANTAGE_OVERVIEW,
 } = require("./alpha-vantage.js");
 
+const {
+  fetchFinnhubMeta,
+  fetchFinnhubInsights,
+  fetchFinnhubChartData,
+  FINNHUB_QUOTE,
+} = require("./finnhub.js");
+
 const { retryFetch, YAHOO_CHART } = require("./helpers.js");
 
 const WebSocket = require("ws");
@@ -115,7 +122,12 @@ wss.on("connection", (ws, req) => {
           if (platform == "yfinance") {
             insightsRes = await fetchYFinanceInsights(symbol);
           } else if (platform == "alpha-vantage") {
-            insightsRes = await fetchAlphaVantageInsights(symbol, alphaVantageOverview);
+            insightsRes = await fetchAlphaVantageInsights(
+              symbol,
+              alphaVantageOverview
+            );
+          } else if (platform == "finnhub") {
+            insightsRes = await fetchFinnhubInsights(symbol);
           }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
         } catch (err) {
@@ -129,6 +141,8 @@ wss.on("connection", (ws, req) => {
             metaRes = await fetchYFinanceMeta(symbol, yFinanceChart);
           } else if (platform == "alpha-vantage") {
             metaRes = await fetchAlphaVantageMeta(symbol, alphaVantageOverview);
+          } else if (platform == "finnhub") {
+            metaRes = await fetchFinnhubMeta(symbol);
           }
           ws.send(JSON.stringify({ type: "meta", data: metaRes }));
         } catch (err) {
@@ -154,9 +168,14 @@ wss.on("connection", (ws, req) => {
 
   async function streamLive() {
     try {
-      tick = await fetchYFinanceChartData(symbol);
+      let tick = {};
+      if (platform == "finnhub") {
+        tick = await fetchFinnhubChartData(symbol);
+      } else {
+        tick = await fetchYFinanceChartData(symbol);
+      }
 
-      if (tick.price != lastPrice) {
+      if (tick.price != lastPrice && tick.price != 0) {
         await saveMarketData(symbol, tick);
         ws.send(JSON.stringify({ type: "live", data: tick }));
         lastPrice = tick.price;
