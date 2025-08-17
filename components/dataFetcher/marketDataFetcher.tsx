@@ -126,7 +126,7 @@ export const MarketDataFetcher: React.FC<MarketDataFetcherProps> = ({
       </div>
 
       {/* Title Section */}
-      {insights && !loading && (
+      {insights && meta && !loading && (
         <div className="grid grid-cols-2 xl:grid-cols-3 mt-4 gap-5">
           <InfoCard data={meta} />
           {isEquity && insights && (
