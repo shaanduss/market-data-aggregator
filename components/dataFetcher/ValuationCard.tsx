@@ -3,7 +3,7 @@ import {
   FinancialCard,
   FinancialCardProps,
 } from "@/components/ui/financial-card/financialCard";
-import { Coins } from "lucide-react";
+import { Calculator, Coins } from "lucide-react";
 
 interface ValuationCardProps {
   data: any;
@@ -36,7 +36,7 @@ const alphaVantageCardData = (data: any) => {
   return {
     title: "PE Ratio",
     titleValue: data?.PERatio ?? "...",
-    icon: <Coins className="h-4 w-4" />,
+    icon: <Calculator className="h-4 w-4" />,
     sideBlocks: [
       {
         label: "Target Price",
