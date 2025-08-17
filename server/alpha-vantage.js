@@ -8,7 +8,7 @@ function ALPHAVANTAGE_OVERVIEW(symbol) {
 
 async function fetchAlphaVantageInsights(symbol, overviewIn) {
   // Fetch overview data from Alpha Vantage
-  let overview = overviewIn
+  let overview = overviewIn;
   if (!overview) {
     overview = await retryFetch(ALPHAVANTAGE_OVERVIEW(symbol), {}, 3, 1000);
   }
@@ -23,37 +23,46 @@ async function fetchAlphaVantageInsights(symbol, overviewIn) {
     ? `${(Number(overview["DividendYield"]) * 100).toFixed(2)}%`
     : "N/A";
 
+  const sectorInfo = overview["Sector"] ?? "N/A";
+  const industry = overview["Industry"] ?? "N/A";
+  const exchange = overview["Exchange"] ?? "N/A";
+  const country = overview["Country"] ?? "N/A";
+
   return {
     PERatio,
     targetPrice,
     eps,
     dividendYield,
+    sectorInfo,
+    industry,
+    exchange,
+    country,
   };
 }
 
 async function fetchAlphaVantageMeta(symbol, overviewIn) {
-  let overview = overviewIn
+  let overview = overviewIn;
   if (!overview) {
     overview = await retryFetch(ALPHAVANTAGE_OVERVIEW(symbol), {}, 3, 1000);
   }
-  const tsData = series["Time Series (Daily)"];
-  const dates = tsData ? Object.keys(tsData).sort().reverse() : [];
-  const latest = dates.length ? tsData[dates] : null;
-  const instrumentType = (overview["AssetType"] == "Common Stock") ? "Equity" : overview["AssetType"];
+
+  // Only use fields available in the OVERVIEW response
+  // All price/time series data is not available via free Alpha Vantage
+  const instrumentType =
+    overview["AssetType"] === "Common Stock" ? "EQUITY" : overview["AssetType"];
+
   return {
     shortName: overview["Name"] ?? symbol,
-    price: latest ? Number(parseFloat(latest["4. close"]).toFixed(2)) : "N/A",
+    price: "N/A", // Not available for free
     instrumentType: instrumentType ?? "N/A",
-    previousClose: latest
-      ? Number(parseFloat(latest["4. close"]).toFixed(2))
-      : "N/A",
+    previousClose: "N/A", // Not available for free
     marketHigh: overview["52WeekHigh"] ?? "N/A",
-    volume: latest ? Number(latest["6. volume"]) : "N/A",
+    volume: "N/A", // Not available for free
   };
 }
 
 module.exports = {
   fetchAlphaVantageInsights,
   fetchAlphaVantageMeta,
-  ALPHAVANTAGE_OVERVIEW
+  ALPHAVANTAGE_OVERVIEW,
 };

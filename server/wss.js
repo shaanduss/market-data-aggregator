@@ -84,18 +84,18 @@ wss.on("connection", (ws, req) => {
           interval = Math.max(1000, Math.min(60000, Number(userInterval)));
         }
 
-        let chart = {};
+        let yFinanceChart = {};
+        let alphaVantageOverview = {};
         try {
           if (platform == "yfinance") {
-            chart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
+            yFinanceChart = await retryFetch(YAHOO_CHART(symbol), {}, 3, 1000);
           } else if (platform == "alpha-vantage") {
-            chart = await retryFetch(
+            alphaVantageOverview = await retryFetch(
               ALPHAVANTAGE_OVERVIEW(symbol),
               {},
               3,
               1000
             );
-            console.log(JSON.stringify(chart, null, 2));
           }
         } catch (err) {
           ws.send(JSON.stringify({ type: "error", error: err.message }));
@@ -103,7 +103,7 @@ wss.on("connection", (ws, req) => {
 
         // Send history
         try {
-          const historyData = await fetchYFinanceHistory(symbol, chart);
+          const historyData = await fetchYFinanceHistory(symbol);
           ws.send(JSON.stringify({ type: "history", data: historyData }));
         } catch (err) {
           ws.send(JSON.stringify({ type: "error", error: err.message }));
@@ -115,7 +115,7 @@ wss.on("connection", (ws, req) => {
           if (platform == "yfinance") {
             insightsRes = await fetchYFinanceInsights(symbol);
           } else if (platform == "alpha-vantage") {
-            insightsRes = await fetchAlphaVantageInsights(symbol, chart);
+            insightsRes = await fetchAlphaVantageInsights(symbol, alphaVantageOverview);
           }
           ws.send(JSON.stringify({ type: "insights", data: insightsRes }));
         } catch (err) {
@@ -126,9 +126,9 @@ wss.on("connection", (ws, req) => {
         try {
           let metaRes = {};
           if (platform == "yfinance") {
-            metaRes = await fetchYFinanceMeta(symbol, chart);
+            metaRes = await fetchYFinanceMeta(symbol, yFinanceChart);
           } else if (platform == "alpha-vantage") {
-            metaRes = await fetchAlphaVantageMeta(symbol, chart);
+            metaRes = await fetchAlphaVantageMeta(symbol, alphaVantageOverview);
           }
           ws.send(JSON.stringify({ type: "meta", data: metaRes }));
         } catch (err) {
