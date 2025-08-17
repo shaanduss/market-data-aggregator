@@ -35,7 +35,7 @@ export const FinancialCard: FC<FinancialCardProps> = ({
         <CardContent className="flex justify-between py-3 px-5 gap-x-6">
           {/* Render Title and Title Value if they exist */}
           {title && titleValue && (
-            <div className="flex flex-col gap-y-3 w-[140px] h-parent flex-shrink-0 justify-center pl-1">
+            <div className="flex flex-col gap-y-3 w-[140px] h-parent flex-shrink-0 justify-center pl-1 break-all">
               <Label className={"text-sm font-semibold"}>
                 {icon}
                 {title}

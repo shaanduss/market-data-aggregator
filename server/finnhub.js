@@ -14,15 +14,6 @@ async function fetchFinnhubMeta(symbol) {
   const profile = await retryFetch(FINNHUB_PROFILE(symbol), {}, 3, 1000);
   const quote = await retryFetch(FINNHUB_QUOTE(symbol), {}, 3, 1000);
 
-  console.log({
-    shortName: profile?.name ?? symbol,
-    price: quote?.c ?? "N/A", // current price
-    instrumentType: profile?.type ?? "N/A", // eg Common Stock
-    previousClose: quote?.pc ?? "N/A",
-    marketHigh: quote.h ?? "N/A",
-    volume: quote?.v ?? "N/A",
-    exchange: profile?.exchange ?? "N/A",
-  });
   return {
     shortName: profile?.name ?? symbol,
     price: quote?.c ?? "N/A", // current price
@@ -38,13 +29,6 @@ async function fetchFinnhubMeta(symbol) {
 async function fetchFinnhubInsights(symbol) {
   const profile = await retryFetch(FINNHUB_PROFILE(symbol), {}, 3, 1000);
 
-  console.log({
-    sectorInfo: profile.finnhubIndustry ?? "N/A", // closest Finnhub offers to sector
-    exchange: profile.exchange ?? "N/A",
-    country: profile.country ?? "N/A",
-    ipo: profile.ipo ?? "N/A",
-  });
-
   return {
     sectorInfo: profile.finnhubIndustry ?? "N/A", // closest Finnhub offers to sector
     exchange: profile.exchange ?? "N/A",
@@ -56,11 +40,7 @@ async function fetchFinnhubInsights(symbol) {
 // ChartData: just latest price/volume (no candles)
 async function fetchFinnhubChartData(symbol) {
   const quote = await retryFetch(FINNHUB_QUOTE(symbol), {}, 3, 1000);
-  console.log({
-    price: quote.c ?? 0,
-    volume: quote.v ?? 0,
-    ts: new Date().toISOString(),
-  });
+
   return {
     price: quote.c ?? 0,
     volume: quote.v ?? 0,
